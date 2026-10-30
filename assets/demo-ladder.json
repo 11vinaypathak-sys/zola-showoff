@@ -1,0 +1,139 @@
+{
+ "asof": "2026-10-22",
+ "node": "career",
+ "current": "L3",
+ "rows": [
+  {
+   "level": "L1",
+   "name": "Entry",
+   "status": "done",
+   "lit_on": "2021-02-01",
+   "left": 0
+  },
+  {
+   "level": "L2",
+   "name": "Reliable delivery",
+   "status": "done",
+   "lit_on": "2023-03-15",
+   "left": 0
+  },
+  {
+   "level": "L3",
+   "name": "Credentialed, visible, shipping",
+   "status": "current",
+   "lit_on": "2026-10-20",
+   "left": 0
+  },
+  {
+   "level": "L4",
+   "name": "Own a shipped system in public",
+   "status": "next \u00b7 2 to go",
+   "lit_on": null,
+   "left": 2
+  },
+  {
+   "level": "L5",
+   "name": "Lead the workflow for others",
+   "status": "locked",
+   "lit_on": null,
+   "left": 2
+  }
+ ],
+ "checklist": [
+  {
+   "text": "AI fluency \u00b7 top rung",
+   "done": true,
+   "measurable": true
+  },
+  {
+   "text": "Shipped artifact in public",
+   "done": true,
+   "measurable": true
+  },
+  {
+   "text": "Trained others on the workflow",
+   "done": true,
+   "measurable": true
+  },
+  {
+   "text": "Evidence pack banked before review",
+   "done": false,
+   "measurable": true
+  },
+  {
+   "text": "Visibility above own team",
+   "done": false,
+   "measurable": false
+  }
+ ],
+ "left": 2,
+ "verdicts": [
+  {
+   "node": "career",
+   "id": "car.next.L4",
+   "metric": "conditions left on L4",
+   "value": 2,
+   "unit": "count",
+   "threshold": 0,
+   "rule": "the rung lights when every listed condition is ticked \u00b7 no partial credit",
+   "basis": {
+    "source": "engine/demo-ladder.json",
+    "n": 11,
+    "asof": "2026-10-22",
+    "level": "B"
+   },
+   "confidence": 0.9,
+   "move": {
+    "what": "evidence pack banked before review",
+    "amount": null,
+    "unit": null,
+    "by": "2026-11-15"
+   },
+   "changes_if": "a condition is ticked or the ladder is edited",
+   "verdict": "ACT"
+  },
+  {
+   "node": "career",
+   "id": "car.data.visibility_above_own_team",
+   "metric": "visibility above own team",
+   "value": null,
+   "unit": null,
+   "threshold": null,
+   "rule": "cannot be measured from inside; needs one named outside reference",
+   "basis": {
+    "source": "engine/demo-ladder.json",
+    "n": 11,
+    "asof": "2026-10-22",
+    "level": "D"
+   },
+   "move": {
+    "what": "name one person outside the team who has seen the work",
+    "amount": null,
+    "unit": null,
+    "by": null
+   },
+   "confidence": 1.0,
+   "changes_if": "the reference is entered",
+   "verdict": "DATA"
+  },
+  {
+   "node": "career",
+   "id": "car.current",
+   "metric": "current rung \u00b7 L3",
+   "value": "2026-10-20",
+   "unit": "date",
+   "threshold": null,
+   "rule": "lit on the date its last condition was ticked",
+   "basis": {
+    "source": "engine/demo-ladder.json",
+    "n": 11,
+    "asof": "2026-10-22",
+    "level": "B"
+   },
+   "move": null,
+   "confidence": 1.0,
+   "changes_if": "never; a lit rung stays lit",
+   "verdict": "SETTLED"
+  }
+ ]
+}

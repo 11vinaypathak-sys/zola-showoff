@@ -1,0 +1,15 @@
+{
+  "_note": "Synthetic intel log for the showoff: one sweep every half day for 31 days. spread = named series minus control; a crossing below the threshold WITH a named source is a signal, without one it is a watch.",
+  "start": "2026-09-29",
+  "rule": {"threshold": -0.5},
+  "seed": 31,
+  "signals": [
+    {"day": 8.0, "spread": -0.62, "source": "Sponsor register update", "note": "register changed hands"},
+    {"day": 17.0, "spread": -0.71, "source": "Named-source confirmation", "note": "two independent confirmations"},
+    {"day": 21.0, "spread": -0.74, "source": "Filing", "note": "spread crossed −0.7"}
+  ],
+  "watches": [
+    {"day": 4.5, "spread": -0.53, "source": null},
+    {"day": 26.0, "spread": -0.56, "source": null}
+  ]
+}

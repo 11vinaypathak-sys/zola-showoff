@@ -1,0 +1,10 @@
+{
+  "_note": "Synthetic studio log for the showoff: 42 days, a plan per day, and whether a session was made. The grid on the page is drawn from this, never typed.",
+  "start": "2026-09-10",
+  "rule": {
+    "floor": 0.8,
+    "window_days": 42
+  },
+  "days": "P0P1P1p0p0 P1P1P1P1p0 p0P0P0P0P1 p0P1P1p0p0 P1p0P1P1P1 P1P1P1p0P0 P0P1p0p0P1 P1p0P1P0P1 P1P0",
+  "_days_format": "pairs: P = planned (p = not planned), then 1 made / 0 not made; spaces ignored"
+}

@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ZOLA · the world</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"./three.module.js","three/addons/":"./jsm/"}}</script>
+<style>
+:root{
+  --g0:#0a0a0b;--g1:#101012;--g2:#17171a;--g3:#1e1e22;
+  --t1:#ededf0;--t2:#a1a1aa;--t3:#71717a;
+  --line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12);
+  --ac:#d6f84a;--up:#4ade80;--down:#f87171;--warn:#fbbf24;
+  --fd:'Space Grotesk',Inter,system-ui,sans-serif;--fb:Inter,system-ui,sans-serif;
+  --fm:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);--fast:140ms;--mid:220ms;--slow:320ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--g0);color:var(--t1);font:14px/1.5 var(--fb);-webkit-font-smoothing:antialiased;overflow:hidden}
+canvas#gl{position:fixed;inset:0;display:block;width:100%;height:100%;cursor:grab}
+canvas#gl.drag{cursor:grabbing}
+canvas#gl{touch-action:none}
+.field-controls{display:flex;align-items:center;gap:8px;margin-left:auto}.field-controls button,.field-controls select{color:var(--t2);background:#11111cdd;border:1px solid rgba(230,210,170,.18);border-radius:999px;padding:8px 12px;font:500 11px var(--fm)}.field-controls button{cursor:pointer}.field-controls .tour{margin:0}@media(max-width:700px){.field-controls{gap:4px}.field-controls button,.field-controls select{padding:8px;font-size:10px}.strip .s3{display:none}}
+.ui{position:fixed;inset:0;z-index:3;pointer-events:none;display:grid;grid-template-rows:auto 1fr auto;padding:22px 26px calc(22px + env(safe-area-inset-bottom,0px))}
+.ui>*{pointer-events:auto}
+.top{display:flex;align-items:center;gap:16px}
+.mark{font:700 15px/1 var(--fd);letter-spacing:.18em;text-transform:uppercase}.mark b{color:var(--ac)}
+.crumb{font:500 11px/1 var(--fm);color:var(--t3);letter-spacing:.08em;text-transform:uppercase}.crumb span{color:var(--t2)}
+.top .r{margin-left:auto;display:flex;align-items:center;gap:8px}
+/* region index — the mind-map's table of contents, outlined shells, one filled */
+.idx{display:flex;gap:6px}
+.ix{border:1px solid var(--line2);border-radius:999px;padding:6px 11px;background:transparent;color:var(--t2);
+  font:500 11px/1 var(--fm);letter-spacing:.06em;cursor:pointer;display:flex;align-items:center;gap:7px;transition:border-color var(--fast) var(--ease),color var(--fast) var(--ease)}
+.ix i{width:7px;height:7px;border-radius:50%;background:var(--hue,#777)}
+.ix:hover{border-color:rgba(255,255,255,.22);color:var(--t1)}
+.ix[aria-current="true"]{border-color:var(--ac);color:var(--t1);background:rgba(214,248,74,.06)}
+.mid{align-self:center;justify-self:start;max-width:430px;pointer-events:none;transition:opacity var(--slow) var(--ease)}
+.mid.hide{opacity:0}
+.h{font:500 clamp(28px,4.2vw,50px)/1.02 var(--fd);letter-spacing:-.02em}.h em{font-style:normal;color:var(--ac)}
+.sub{margin-top:14px;color:var(--t2);max-width:380px}
+.note{margin-top:22px;font:400 12px/1.5 var(--fm);color:var(--t3);max-width:360px;border-left:1px solid var(--line2);padding-left:12px}.note b{color:var(--t2);font-weight:500}
+/* inside page — the camera dives, the page slides over the left two-thirds; the landmark stays alive on the right.
+   Flat: one solid surface, one hairline, one 2px hue rule. The instrument is the only anchor. */
+.page{position:fixed;left:0;top:0;bottom:0;z-index:2;width:min(64vw,900px);background:rgba(10,10,11,.9);border-right:1px solid var(--line);
+  padding:78px 44px 60px 26px;display:grid;grid-template-rows:auto 1fr auto;gap:26px;opacity:0;pointer-events:none;transform:translateX(-18px);
+  transition:opacity var(--slow) var(--ease),transform var(--slow) var(--ease);overflow:hidden}
+.page.on{opacity:1;pointer-events:auto;transform:none}
+.page::before{content:"";position:absolute;left:26px;top:64px;width:48px;height:2px;background:var(--hue,var(--ac))}
+.k{font:500 10px/1 var(--fm);letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
+.pg-head .k{display:flex;gap:14px}.pg-head .k b{color:var(--t2);font-weight:500}
+.pg-head h1{margin-top:12px;font:500 clamp(26px,3.1vw,40px)/1.04 var(--fd);letter-spacing:-.02em;max-width:17ch}
+.pg-head p{margin-top:12px;color:var(--t2);max-width:52ch;font-size:13.5px}
+.pg-body{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:28px;align-content:start;overflow:auto;scrollbar-width:none;padding-right:2px}
+.pg-body::-webkit-scrollbar{display:none}
+.pg-body>.inst{min-width:0}
+.pg-note{font:400 12px/1.55 var(--fm);color:var(--t3);border-left:1px solid var(--line2);padding-left:12px;align-self:start;margin-top:4px}
+.pg-note b{color:var(--t2);font-weight:500;display:block;margin-bottom:4px}
+.pg-nav{display:flex;align-items:center;gap:8px}
+.pg-nav button{border:1px solid var(--line2);border-radius:999px;padding:7px 12px;background:transparent;color:var(--t2);font:500 11px/1 var(--fm);letter-spacing:.06em;cursor:pointer}
+.pg-nav button:hover{color:var(--t1);border-color:rgba(255,255,255,.22)}
+.pg-nav .sp{flex:1}.pg-nav i{width:7px;height:7px;border-radius:50%;background:var(--nh,#777);display:inline-block;margin-right:7px;vertical-align:1px}
+/* hero numeral — dot-matrix as punctuation, one per page */
+.hero{display:flex;align-items:flex-end;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.hero.money .hn{font-size:clamp(40px,4.4vw,64px)}.hero .hl{max-width:260px}
+.inst.dense .hero .hn{font-size:clamp(40px,4.6vw,64px)}.inst.dense .chain .st{min-height:54px}.inst.dense .q{padding:6px 10px}
+.hn{font:700 clamp(54px,7vw,96px)/.85 var(--fd);letter-spacing:.04em;font-variant-numeric:tabular-nums;
+  background:radial-gradient(circle,var(--t1) 0 1.3px,transparent 1.6px) 0 0/6px 6px;-webkit-background-clip:text;background-clip:text;color:transparent}
+.hl{font:500 12px/1.4 var(--fm);color:var(--t2);padding-bottom:6px;letter-spacing:.02em}
+/* staged reveal: anything with data-at lights when the page clock passes it */
+[data-at]{opacity:.22;transform:translateY(6px);transition:opacity var(--mid) var(--ease),transform var(--mid) var(--ease)}[data-at].on{opacity:1;transform:none}
+/* page head arrives in three beats: rule, eyebrow, headline */
+.page .pg-head>*{opacity:0;transform:translateY(8px);transition:opacity var(--slow) var(--ease),transform var(--slow) var(--ease)}
+.page.on .pg-head>*{opacity:1;transform:none}.page.on .pg-head>:nth-child(2){transition-delay:80ms}.page.on .pg-head>:nth-child(3){transition-delay:160ms}
+.page::before{transform:scaleX(0);transform-origin:left;transition:transform var(--slow) var(--ease)}.page.on::before{transform:none}
+/* boot: the UI arrives after the world has assembled */
+html.boot .ui,html.boot #labels{opacity:0}.ui,#labels{transition:opacity 600ms var(--ease)}
+/* hovered landmark name brightens */
+.lm.hot{color:var(--t1)}
+/* system page: stack diagram + module inventory */
+.stack{display:flex;flex-direction:column-reverse;gap:4px;margin:4px 0 14px}
+.layer{display:grid;grid-template-columns:86px 1fr auto;gap:12px;align-items:baseline;border:1px solid var(--line);border-radius:8px;padding:9px 12px}
+.layer .ln{font:500 10px/1 var(--fm);letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
+.layer .lt{font:500 13px/1.3 var(--fd);color:var(--t1)}.layer .ld{font:400 11px/1.4 var(--fm);color:var(--t3)}
+.layer.on{border-color:var(--line2)}.layer.on .ln{color:var(--hue)}
+.mods{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 14px}
+.mod{display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font:400 11.5px/1.35 var(--fb);color:var(--t2)}
+.mod code{font:500 11px/1 var(--fm);color:var(--t1);white-space:nowrap}
+.facts{display:flex;gap:18px;margin:12px 0 2px;flex-wrap:wrap}
+.fact{font:500 11px/1.3 var(--fm);color:var(--t3);letter-spacing:.04em}.fact b{display:block;font:700 22px/1 var(--fd);color:var(--t1);letter-spacing:-.01em;margin-bottom:3px}
+.keys{display:flex;gap:14px;flex-wrap:wrap}.keys em{font-style:normal;display:inline-flex;align-items:center;gap:6px;font:500 10px/1 var(--fm);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}.keys span{color:var(--t1);border:1px solid var(--line2);border-radius:4px;padding:3px 6px}
+/* ladder */
+.ladder{display:grid;grid-template-columns:28px 1fr;gap:0 14px}
+.rung{display:contents}.rung .no{font:500 10px/1 var(--fm);color:var(--t3);padding:10px 0;letter-spacing:.1em}
+.rung .nm{padding:9px 0;border-bottom:1px solid var(--line);font:500 13px/1.3 var(--fb);color:var(--t3);display:flex;justify-content:space-between}
+.rung.cur .nm,.rung.cur .no{color:var(--t1)}.rung.cur .nm{border-color:var(--hue)}.rung.done .nm{color:var(--t2)}
+.rung .nm span{font:500 11px/1 var(--fm);color:var(--t3)}
+/* timeline (intel) */
+.tl{position:relative;height:120px;border-bottom:1px solid var(--line2);margin:8px 0 6px}
+.tl .pg.b{height:70px}.tl .pg.c{height:100px}
+.tl .d{position:absolute;bottom:-1px;width:1px;height:8px;background:var(--line2)}
+.tl .pg{position:absolute;bottom:0;width:2px;height:40px;background:var(--hue)}.tl .pg::after{content:attr(data-l);position:absolute;left:8px;top:-4px;font:500 10px/1.3 var(--fm);color:var(--t1);white-space:nowrap}
+.tl .sil{position:absolute;bottom:14px;height:1px;background:var(--line2)}.tl .sil::after{content:attr(data-l);position:absolute;left:50%;transform:translateX(-50%);top:-14px;font:500 9px/1 var(--fm);color:var(--t3);letter-spacing:.1em;white-space:nowrap}
+.tl .ax{position:absolute;top:100%;margin-top:6px;font:500 9px/1 var(--fm);color:var(--t3);letter-spacing:.08em}
+/* cron strip (engine) */
+.ticks{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:14px}
+.ticks i{height:18px;border:1px solid var(--line);border-radius:3px;position:relative}
+.ticks i.on{border-color:var(--hue)}.ticks i.on::after{content:"";position:absolute;inset:4px;background:var(--hue);border-radius:1px}
+.ticks i.now{border-color:var(--ac)}.ticks i.now::after{content:"";position:absolute;inset:4px;background:var(--ac);border-radius:1px}
+.scrim{position:fixed;inset:0;z-index:1;background:rgba(10,10,11,.38);opacity:0;pointer-events:none;transition:opacity var(--slow) var(--ease)}.scrim.on{opacity:1}
+/* engine exhibit (question → verdict) */
+.qs{display:flex;flex-direction:column;gap:6px}
+.q{text-align:left;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;background:transparent;color:var(--t2);font:500 12.5px/1.3 var(--fb);cursor:pointer;transition:border-color var(--fast) var(--ease),color var(--fast) var(--ease)}
+.q:hover{border-color:rgba(255,255,255,.22);color:var(--t1)}
+.q[aria-pressed="true"]{border-color:var(--ac);color:var(--t1);background:rgba(214,248,74,.06)}
+.chain{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.chain3{grid-template-columns:repeat(3,1fr)}
+.st{border:1px solid var(--line);border-radius:8px;padding:8px 8px 7px;position:relative;min-height:64px}
+.st .n{font:500 9px/1 var(--fm);color:var(--t3);letter-spacing:.1em}
+.st .tt{font:700 10px/1 var(--fd);letter-spacing:.08em;text-transform:uppercase;margin-top:6px;color:var(--t3)}
+.st .dd{font:400 11px/1.4 var(--fb);color:var(--t3);margin-top:6px}
+.st.on{border-color:var(--line2)}.st.on .tt{color:var(--t1)}.st.on .dd{color:var(--t2)}
+.st.on::before{content:"";position:absolute;left:8px;right:8px;top:-1px;height:2px;background:var(--ac)}
+.ok{color:var(--up)}.no{color:var(--down)}
+.v{margin-top:12px;font:500 16px/1.25 var(--fd)}
+.why{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.why div{font:400 11.5px/1.4 var(--fm);color:var(--t2);padding-left:12px;position:relative}
+.why div::before{content:"";position:absolute;left:0;top:7px;width:6px;height:1px;background:var(--t3)}
+.sw{display:flex;align-items:center;gap:10px;border:1px solid var(--line2);border-radius:999px;padding:6px 10px 6px 12px;font:500 11px/1 var(--fm);color:var(--t2);letter-spacing:.06em;cursor:pointer;background:transparent;margin-top:12px}
+.sw i{width:28px;height:16px;border-radius:999px;border:1px solid var(--line2);position:relative;display:inline-block;transition:background var(--mid) var(--ease)}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:var(--t2);transition:transform var(--mid) var(--ease),background var(--mid) var(--ease)}
+.sw[aria-checked="true"] i{background:rgba(214,248,74,.14);border-color:rgba(214,248,74,.5)}
+.sw[aria-checked="true"] i::after{transform:translateX(12px);background:var(--ac)}
+.aitext{margin-top:10px;font:400 11.5px/1.45 var(--fb);color:var(--t3)}.aitext b{color:var(--t2);font-weight:500}
+/* verdict cards: the output contract drawn once, used on every page */
+.vfeed{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.vc{display:grid;grid-template-columns:64px 1fr auto;gap:0 12px;align-items:start;border:1px solid var(--line);border-radius:8px;padding:9px 12px 8px;position:relative}
+.vc.on{border-color:var(--line2)}
+.vc .vv{font:700 10px/1 var(--fd);letter-spacing:.1em;text-transform:uppercase;color:var(--t3);padding-top:3px}
+.vc.on .vv.act{color:var(--ac)}.vc.on .vv.data{color:var(--t2)}.vc.on .vv.wait{color:var(--t3)}.vc.on .vv.settled{color:var(--up)}
+.vc .vm{font:500 13px/1.3 var(--fd);color:var(--t1)}.vc .vr{font:400 11px/1.45 var(--fb);color:var(--t3);margin-top:3px}
+.vc .vr b{font-weight:500;color:var(--t2)}
+.vc .vn{text-align:right;font:500 13px/1 var(--fm);color:var(--t1);white-space:nowrap}.vc .vn small{display:block;font:500 9px/1 var(--fm);letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-top:5px}
+.vc .vx{grid-column:2/4;font:400 10.5px/1.4 var(--fm);color:var(--t3);margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}
+.vc .vx i{font-style:normal;color:var(--t2)}
+.vfoot{font:500 10px/1.4 var(--fm);letter-spacing:.06em;color:var(--t3);margin-top:8px}
+/* generic exhibit widgets */
+.rows{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;justify-content:space-between;align-items:baseline;font:400 12.5px/1.3 var(--fb);color:var(--t2);padding:7px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}.row b{color:var(--t1);font-weight:500}.row .num{font-family:var(--fm);font-size:12px}
+.grid7{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;margin-top:4px}
+.grid7 i{aspect-ratio:1;border-radius:2px;background:var(--g3)}.grid7 i.made{background:var(--hue,var(--ac));opacity:.82}.grid7 i.half{background:rgba(255,255,255,.2)}
+.bar{height:6px;background:var(--g3);border-radius:3px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--hue,var(--ac))}
+.chk{display:flex;align-items:center;gap:8px;font:400 12.5px/1.3 var(--fb);color:var(--t2);padding:6px 0}
+.chk i{width:12px;height:12px;border:1px solid var(--line2);border-radius:3px;display:inline-block;position:relative}
+.chk.done{color:var(--t1)}.chk.done i{border-color:var(--hue,var(--ac));background:var(--hue,var(--ac))}
+.ping{display:flex;align-items:center;gap:10px;font:400 12px/1.3 var(--fm);color:var(--t2);padding:6px 0;border-bottom:1px solid var(--line)}
+.ping:last-child{border-bottom:0}.ping b{color:var(--t1);font-weight:500}.ping span{margin-left:auto;color:var(--t3)}
+.lbl{position:fixed;transform:translate(-50%,-130%);pointer-events:none;font:500 11px/1 var(--fm);color:var(--t1);white-space:nowrap;opacity:0;transition:opacity var(--mid) var(--ease);padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:rgba(10,10,11,.8)}
+.lbl.dead{color:var(--t3);text-decoration:line-through}.lbl.on{opacity:1}
+.lm{position:fixed;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer;font:700 11px/1 var(--fd);letter-spacing:.14em;text-transform:uppercase;color:var(--t2);opacity:0;transition:opacity var(--mid) var(--ease),color var(--fast) var(--ease);text-shadow:0 0 12px #0a0a0b,0 0 4px #0a0a0b}
+.lm.on{opacity:1}.lm:hover{color:var(--t1)}.lm small{display:block;font:500 9px/1.2 var(--fm);letter-spacing:.08em;color:var(--t3);margin-top:4px;text-transform:none}
+.bot{display:flex;align-items:flex-end;gap:14px;grid-row:3;pointer-events:none}.bot .field-controls{pointer-events:auto}
+/* bottom strip: the only words on the overview. Dot-matrix wordmark as punctuation, one line of what, one line of how. */
+.strip{display:flex;gap:28px;align-items:flex-end;flex:1;min-width:0;transition:opacity var(--slow) var(--ease)}
+.strip.hide{opacity:0;pointer-events:none}
+.s1{font:700 clamp(30px,4.2vw,56px)/.9 var(--fd);letter-spacing:.22em;flex:none;
+  background:radial-gradient(circle,var(--t1) 0 1.1px,transparent 1.4px) 0 0/5px 5px;-webkit-background-clip:text;background-clip:text;color:transparent}
+.s2{font:500 12px/1.5 var(--fm);color:var(--t2);letter-spacing:.02em;padding-bottom:4px;flex:1;min-width:180px}
+.s3{font:500 10px/1 var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--t3);padding-bottom:6px;display:flex;gap:18px;flex:none}
+.s3 em{font-style:normal;display:inline-flex;align-items:center;gap:7px}
+.s3 span{color:var(--t1);border:1px solid var(--line2);border-radius:4px;padding:3px 6px}
+@media (max-width:1100px){.s3{display:none}}
+@media (max-width:760px){.s2{display:none}}
+.hint{display:none}
+.tour{margin-left:auto;border:1px solid var(--line2);border-radius:999px;padding:7px 12px;background:transparent;color:var(--t2);font:500 11px/1 var(--fm);letter-spacing:.06em;cursor:pointer}
+.tour:hover{color:var(--t1);border-color:rgba(255,255,255,.22)}
+.tour.hide{opacity:0;pointer-events:none}
+#labels{position:fixed;inset:0;z-index:2;pointer-events:none}#labels .lm{pointer-events:auto}
+/* harness: a still frame must not depend on when the screenshot lands mid-transition */
+html.still *{transition:none !important;animation:none !important}
+@media (max-width:820px){.mid{display:none}.idx .ix span{display:none}.page{width:100vw;padding:70px 16px 24px;border-right:0}.pg-body{grid-template-columns:1fr}.pg-note{display:none}}
+
+/* exhibits: one drawing per page, drawn from the feed; the text sits under it */
+.ex{margin:6px 0 18px;padding-top:14px;border-top:2px solid var(--hue)}
+.ex svg{width:100%;height:auto;display:block;overflow:visible}
+.ex .xl{font:500 12px var(--fm);fill:var(--t2);letter-spacing:.08em;text-transform:uppercase}
+.ex .xl.dim{fill:var(--t3);text-transform:none;letter-spacing:.02em;font-size:11.5px}
+.ex .num{font:500 46px/1 var(--fd);fill:var(--t1);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ex .num.sm{font-size:34px}
+.ex div.num{font:500 clamp(36px,4vw,56px)/1 var(--fd);color:var(--t1);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ex div.xl{font:500 10px/1.5 var(--fm);color:var(--t2);letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.ex div.xl.dim{color:var(--t3);text-transform:none;letter-spacing:.02em}
+.ex .arcbg{stroke:var(--line2);fill:var(--line2)}
+.ex path.arcbg{fill:none}
+.ex .arc{stroke:var(--hue);fill:none;stroke-dasharray:var(--len) var(--len);stroke-dashoffset:var(--len);transition:stroke-dashoffset 1.4s var(--ease)}
+.ex .arc.on{stroke-dashoffset:var(--off)}
+.ex .over{stroke:#fbbf24;fill:none}
+.ex .mk{stroke:var(--line2);stroke-width:1}
+.ex .cap{stroke:var(--t1);stroke-width:1.5}
+.ex .needle line{stroke:var(--t1);stroke-width:1.5}
+.ex .needle circle{fill:var(--t1)}
+.ex .rail{stroke:var(--line2);stroke-width:1}
+.ex .rung line{stroke:var(--line2);stroke-width:1.5;stroke-dasharray:3 4}
+.ex .rung.done line{stroke:var(--t3);stroke-dasharray:none}
+.ex .rung.cur line{stroke:var(--hue);stroke-width:3;stroke-dasharray:none}
+.ex .rung .nm{font:500 13px var(--fd);fill:var(--t2)}
+.ex .rung.cur .nm{fill:var(--t1)}
+.ex .cb{fill:none;stroke:var(--line2)}
+.ex .cb.on{fill:var(--hue);stroke:var(--hue)}
+.ex .fill{fill:var(--hue)}
+.ex .bar{margin-top:16px;overflow:visible}
+.ex .exrow{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(200px,.9fr);gap:22px;align-items:start}
+.ex .scope{max-width:260px}
+.ex .ring{fill:none;stroke:var(--line2);stroke-width:1}
+.ex .ring.hue{stroke:var(--hue);stroke-width:1.5}
+.ex .ring.tool{stroke-dasharray:2 5;stroke:var(--t3)}
+.ex .sweep{fill:var(--hue);opacity:.22;transform-origin:130px 130px;animation:exsweep 5s linear infinite}
+.ex .ping circle{fill:var(--hue)}
+.ex .ping .halo{fill:none;stroke:var(--hue);stroke-width:1;opacity:.5}
+.ex .watch{fill:var(--t3)}
+.ex .dot{fill:var(--t1)}
+.ex .dot.run{fill:var(--hue)}
+.ex .tool-l circle{fill:var(--t3)}
+.ex .grid7.big{grid-template-columns:repeat(14,1fr);gap:6px;margin:0}
+.ex .grid7.big i{border-radius:3px}
+.ex .grid7.big i.half{background:none;border:1px solid var(--line2)}
+.below .num-i{font:500 12.5px var(--fm);color:var(--t1);font-variant-numeric:tabular-nums}
+@keyframes exsweep{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.ex .sweep{animation:none}}
+.still .ex .sweep{animation:none}
+@media (max-width:760px){.ex .exrow{grid-template-columns:1fr}}
+.ex .stn circle.ring{fill:var(--g2,#17171a)}
+.ex .stn.hue circle.ring{stroke:var(--hue);stroke-width:2}
+.ex .xl.out{fill:var(--t2);text-transform:none;letter-spacing:.01em;font-size:11px}
+.ex .vbox{fill:none;stroke:var(--hue);stroke-width:1}
+.ex .vtext{font:500 14px var(--fd);fill:var(--t1)}
+.pg-head h1{max-width:24ch}
+
+/* ---- tonal page system (26 Oct): every colour on a page is derived from the node hue and one dark surface.
+   Surfaces carry hierarchy (no shadows); text is emphasis levels, never pure white; accent is diffused into
+   fills and rings via color-mix against the surface, never white. See docs/RESEARCH.md pass 3. ---- */
+.page{--sf:#0b0b0e;
+  --bg:color-mix(in oklab,var(--sf) 87%,var(--hue) 13%);
+  --sf1:color-mix(in oklab,var(--sf) 78%,var(--hue) 22%);
+  --t1:color-mix(in oklab,#e4e4ea 80%,var(--hue) 20%);
+  --t2:color-mix(in oklab,var(--t1) 66%,var(--bg) 34%);
+  --t3:color-mix(in oklab,var(--t1) 44%,var(--bg) 56%);
+  --line:color-mix(in oklab,var(--hue) 16%,transparent);
+  --line2:color-mix(in oklab,var(--hue) 34%,transparent);
+  --ac:var(--hue);
+  background:color-mix(in oklab,var(--bg) 94%,transparent);color:var(--t1)}
+.page .st,.page .layer,.page .q,.page .vcard,.page .fact,.page .mod{background:color-mix(in oklab,var(--hue) 7%,transparent);border-color:var(--line)}
+.page .q:hover,.page .q[aria-pressed=true]{background:color-mix(in oklab,var(--hue) 13%,transparent);border-color:var(--line2);color:var(--t1)}
+.page .pg-nav button,.page .sw{background:color-mix(in oklab,var(--hue) 6%,transparent);border-color:var(--line2);color:var(--t2)}
+.page .pg-nav button:hover,.page .sw:hover{background:color-mix(in oklab,var(--hue) 12%,transparent);color:var(--t1)}
+.page .pg-head h1{color:var(--t1);font-weight:500}
+.page .pg-head p{color:var(--t2)}
+.page .pg-note{border-left-color:var(--line2);color:var(--t3)}
+.page .pg-note b{color:var(--t2)}
+.page .ex{border-top-color:color-mix(in oklab,var(--hue) 55%,transparent)}
+.page .row{border-bottom-color:var(--line)}
+.page .k{color:var(--t3)}
+/* less content, more exhibit: the three-step chain and the long explainer step back; the verdict feed (real output) stays */
+.page .below .chain3,.page .below .aitext:not(#aitext){display:none}
+.page .below{margin-top:4px}
+
+/* ---- glass + soft-tonal pass (26 Oct, from Vinay's refs: neumorphic soft UI, liquid glass, glassmorphism over a scene).
+   Dark translation: the page is frosted glass over the living sky; cards are thinner glass with a specular top edge,
+   a soft inner highlight top-left and a soft shadow bottom-right; controls are soft pills. Hue stays the only colour. ---- */
+.page{background:linear-gradient(160deg,color-mix(in oklab,var(--bg) 62%,transparent),color-mix(in oklab,var(--bg) 78%,transparent));
+  -webkit-backdrop-filter:blur(26px) saturate(1.3);backdrop-filter:blur(26px) saturate(1.3);
+  border-right:1px solid color-mix(in oklab,var(--hue) 18%,transparent);
+  box-shadow:inset 1px 0 0 color-mix(in oklab,white 7%,transparent), 30px 0 80px -40px rgba(0,0,0,.8)}
+.page .st,.page .layer,.page .q,.page .vcard,.page .fact,.page .mod,.page .ex,.page .pg-note{
+  position:relative;border-radius:14px;border:1px solid color-mix(in oklab,var(--hue) 20%,transparent);
+  background:linear-gradient(135deg,color-mix(in oklab,var(--hue) 12%,transparent) 0%,color-mix(in oklab,var(--hue) 4%,transparent) 60%,color-mix(in oklab,white 3%,transparent) 100%);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  box-shadow:inset 1px 1px 0 color-mix(in oklab,white 12%,transparent), inset -1px -1px 0 rgba(0,0,0,.38), 10px 14px 30px -18px rgba(0,0,0,.75)}
+.page .st::before,.page .vcard::before,.page .ex::before,.page .layer::before{content:"";position:absolute;left:10%;right:10%;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,color-mix(in oklab,white 42%,var(--hue)) 50%,transparent);opacity:.8;pointer-events:none}
+.page .ex{padding:18px 18px 14px;border-top:1px solid color-mix(in oklab,var(--hue) 20%,transparent)}
+.page .mod{border-radius:10px;padding:7px 10px;margin-bottom:4px;border-bottom:1px solid color-mix(in oklab,var(--hue) 20%,transparent)}
+.page .pg-note{padding:12px 14px;border-left:1px solid color-mix(in oklab,var(--hue) 20%,transparent)}
+.page .row{border-bottom:1px solid color-mix(in oklab,var(--hue) 14%,transparent)}
+/* soft pills: outer soft shadow pair (the neumorphic cue) on a glass fill */
+.page .pg-nav button,.page .sw,.page .q{border-radius:999px;
+  box-shadow:6px 6px 14px rgba(0,0,0,.45), -3px -3px 10px color-mix(in oklab,white 5%,transparent), inset 1px 1px 0 color-mix(in oklab,white 10%,transparent)}
+.page .q{border-radius:12px}
+.page .pg-nav button:active,.page .sw:active,.page .q[aria-pressed=true]{box-shadow:inset 4px 4px 10px rgba(0,0,0,.5), inset -2px -2px 8px color-mix(in oklab,white 5%,transparent)}
+/* the big number as liquid glass: a light-to-tone gradient through the glyphs */
+.page .hn,.page .ex div.num{background:linear-gradient(180deg,color-mix(in oklab,white 70%,var(--hue)) 0%,var(--t1) 55%,var(--t2) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.page .vcard .amt,.page .vcard b{color:var(--t1)}
+@media (prefers-reduced-transparency: reduce){.page,.page .st,.page .vcard,.page .ex{-webkit-backdrop-filter:none;backdrop-filter:none}}
+@media(max-width:700px){.ui{padding:18px 16px 20px}.crumb{display:none}.top{gap:8px}.bot{flex-wrap:wrap;gap:12px}.strip{flex-basis:100%}.strip .s1{font-size:30px}.field-controls{width:100%;justify-content:flex-end}.field-controls button,.field-controls select{min-height:40px}.idx .ix{min-width:32px;min-height:32px;justify-content:center;padding:8px}}
+.live-workflow{padding:24px;border:1px solid color-mix(in oklab,var(--hue) 24%,transparent);border-radius:14px;background:rgba(15,20,30,.55)}.live-label{font:10px var(--fm);color:var(--hue);letter-spacing:.1em;text-transform:uppercase}.live-workflow h2{font:500 26px/1.25 var(--fd);margin:15px 0 24px}.live-workflow h3{font:500 14px var(--fd);margin:24px 0 12px}.live-workflow p,.live-workflow li{font-size:13px;line-height:1.8;color:#c2ccdb}.live-workflow ol,.live-workflow ul{padding-left:20px}.live-workflow li{margin:9px 0}.live-metrics{display:flex;gap:10px;flex-wrap:wrap}.live-metrics>div{flex:1;min-width:100px;padding:18px 12px;background:rgba(5,10,20,.45);border-radius:9px}.live-metrics b{font:500 24px var(--fm);display:block}.live-metrics span{display:block;font-size:11px;color:#b1bed0;margin-top:8px}.live-rule{padding:5px 0 5px 14px;border-left:2px solid var(--hue);margin:22px 0}.live-rule small{font:10px var(--fm);color:var(--hue)}.live-rule p{margin-top:8px}.live-meta{font:10px/1.8 var(--fm);color:#a6b4c9;margin:25px 0;overflow-wrap:anywhere}
+</style>
+<link rel="stylesheet" href="./workspace.css">
+<link rel="stylesheet" href="./pilot.css">
+</head>
+<body>
+<canvas id="gl" aria-label="ZOLA as an infinite space: five regions of memory around one core, navigable like a mind map"></canvas>
+
+<div class="ui">
+  <header class="top">
+    <div class="mark">Z<b>O</b>LA</div>
+    <div class="crumb" id="crumb">the world <span>/ overview</span></div>
+    <div class="r"><nav class="idx" id="idx" aria-label="Regions"></nav></div>
+  </header>
+  <section class="mid" id="mid"></section>
+  <footer class="bot">
+    <div class="strip" id="strip">
+      <div class="s1">ZOLA</div>
+      <div class="s2">THE CELESTIAL FIELD<br>five worlds · one memory · a living constellation</div>
+      <div class="s3"><em><span>drag</span>look</em><em><span>scroll</span>move</em><em><span>click</span>enter</em><em><span>W S</span>fly</em><em><span>A D</span>turn</em><em><span>0</span>home</em></div>
+    </div>
+    <div class="field-controls"><button onclick="window.__goto(-1)" title="Return to the celestial field (0 or Escape)">Overview</button><label><span class="sr-only" style="position:absolute;clip-path:inset(50%)">Visual quality</span><select id="quality" aria-label="Visual quality"><option value="auto">Auto</option><option value="cinematic">Cinematic</option><option value="light">Light</option></select></label><button class="tour" id="tourBtn">Replay tour</button></div>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<section class="page" id="page" aria-live="polite">
+  <header class="pg-head"><div class="k" id="pgK"></div><h1 id="pgT"></h1><p id="pgD"></p></header>
+  <div class="pg-body"><div class="inst" id="pgB"></div><aside class="pg-note" id="pgN"></aside></div>
+  <nav class="pg-nav" id="pgNav"></nav>
+</section>
+<div id="labels"></div>
+
+<script>window.__errlog=[];addEventListener("error",e=>window.__errlog.push(e.message+" @"+e.lineno+":"+e.colno));addEventListener("unhandledrejection",e=>window.__errlog.push("rej "+String(e.reason).slice(0,200)));</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { createDivineField } from './divine-field.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+// post: pmndrs/postprocessing (Zlib) — one merged pass: bloom with luminance smoothing, depth of field on the focus, vignette, SMAA
+import { EffectComposer, RenderPass, EffectPass, BloomEffect, DepthOfFieldEffect, VignetteEffect, SMAAEffect, ChromaticAberrationEffect, NoiseEffect, GodRaysEffect } from './vendor/postprocessing.js';
+// fat lines: world-space thickness for the relevance ribbon
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+
+/* ---------------- harness ---------------- */
+const P=new URLSearchParams(location.search);
+const STILL=P.has('still'), REDUCED=STILL||matchMedia('(prefers-reduced-motion: reduce)').matches;
+const R0=P.get('region'), TOUR=P.get('tour')!=='0' && !REDUCED && !R0;
+const Q0=P.has('q')?+P.get('q'):-1;
+if(STILL) document.documentElement.classList.add('still');
+
+/* ---------------- demo data (seeded, fictional) ---------------- */
+function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+const R=rng(20261016);
+// five regions on a tilted ring around the core, each with its own hue, landmark and exhibit
+const REG=[
+  {id:'finance', name:'Finance',  hex:0xe3c98f, ang:-0.35, r:26, y: 3,  tag:'cockpit',   one:'Money has a dashboard. Decisions have due dates.',
+   inside:'Inside: live holdings against goals, every pending move with a deadline and a cost for waiting, and a rules engine that answers in one sentence instead of a chart.'},
+  {id:'career',  name:'Career',   hex:0x8fb4ff, ang: 0.95, r:27, y: 7,  tag:'ladder',    one:'The next rung is a checklist, not a hope.',
+   inside:'Inside: the current level, exactly what unlocks the next one, credentials tracked like releases, and a reputation line that moves when work ships.'},
+  {id:'creative',name:'Creative', hex:0xff7a59, ang: 2.25, r:25, y:-4,  tag:'studio',    one:'Make, log, look back. Repeat until it is a rhythm.',
+   inside:'Inside: a board of planned pieces, the sessions that actually happened, and a grid that shows the gap between the two without comment.'},
+  {id:'intel',   name:'Intel',    hex:0x5ee6c1, ang: 3.55, r:26, y:-2,  tag:'radar',     one:'It watches. It speaks only when a line is crossed.',
+   inside:'Inside: scheduled sweeps of public sources, a short ledger of real signals weeks apart, and the thresholds that decide what counts.'},
+  {id:'engine',  name:'Engine',   hex:0xc4a8ff, ang: 4.85, r:24, y: 9,  tag:'engine room', one:'Deterministic core, agentic shell. The rules decide.',
+   inside:'The whole backend on one page: the five-layer stack, the thirteen engine modules and what each one is for, the scheduler ticking, and a verdict chain you can run yourself — then switch the AI off and watch nothing change.'},
+];
+REG.forEach(g=>{ g.c=new THREE.Vector3(Math.cos(g.ang)*g.r, g.y, Math.sin(g.ang)*g.r); g.color=new THREE.Color(g.hex); g.css='#'+g.hex.toString(16).padStart(6,'0'); });
+const TITLES={
+  finance:['Rebalance rule v3 — kept','Credit sleeve cap 48% — kept','Denominator trap note','Drawdown rule stays silent until history','Rotation ≠ exit (FPI read)','Quarterly cadence, not hourly','Sparkline empty beats a fake flat line','Informs, never trades'],
+  career: ['Ladder rung unlocks as checklist','Reputation is a metric','Evidence pack before any reaction','Peer-anchored hours are servicer hours','Ship before you ask','Training others compounds','Deadline floors the read','Visibility is not noise'],
+  creative:['Rhythm beats talent','Plan ghosted behind reality','Consistency grid, no judgment','Ship the 60-second cut first','One memorable moment per page','Dot-matrix is punctuation','No gradient on UI','Reference by object, not adjective'],
+  intel:  ['Silence is the feature','Threshold before notification','Control group isolates the event','ADR traded after the news','Survivorship: find the dead','Wilson floor, not raw rate','Named median vs control median','Untested ≠ avoid'],
+  engine: ['Deterministic core, agentic shell','AI proposes, never decides','Tick-based, not a daemon','Allowlist gitignore, never blocklist','Lint the served artifact','Backup before every write','Moves decay without outcomes','Observability before automation'],
+};
+const nodes=[]; const PER=24;   // a sparse cloud: the notes live inside the page, not around the planet
+REG.forEach((g,ci)=>{ for(let i=0;i<PER;i++){
+  const rr=3.2+R()*7.5, th=R()*Math.PI*2, ph=Math.acos(2*R()-1);
+  const off=new THREE.Vector3(rr*Math.sin(ph)*Math.cos(th), rr*Math.sin(ph)*Math.sin(th)*.6, rr*Math.cos(ph));
+  nodes.push({off, p:off.clone().add(g.c), ci, w:Math.pow(R(),2.2), title:i<8?TITLES[g.id][i]:null, dead:false, spin:(R()-.5)*0.08});
+}});
+['Festive-timing edge — tested dead','Named-politician tracking — declined','Hourly market watch — scope inflation','Spinner for loading — replaced by scan','Equal-sized tiles — hierarchy lost']
+ .forEach((t,i)=>{ const p=new THREE.Vector3(-8+i*3.2, -22+R()*2, 38+R()*3); nodes.push({off:p.clone(),p,ci:4,w:.08,title:t,dead:true,spin:0}); });
+const N=nodes.length;
+const edges=[];
+for(let i=0;i<N;i++){ if(nodes[i].dead) continue; let cand=[];
+  for(let j=0;j<N;j++){ if(i===j||nodes[j].dead||nodes[j].ci!==nodes[i].ci) continue; const d=nodes[i].p.distanceTo(nodes[j].p); if(d<4.6) cand.push([d,j]); }
+  cand.sort((a,b)=>a[0]-b[0]); cand.slice(0,3).forEach(([,j])=>{ if(i<j) edges.push([i,j]); }); }
+// the brain: every region's strongest memories connect to the core
+const CORE=new THREE.Vector3(0,0,0);
+const coreLinks=[]; REG.forEach((g,ci)=>{ const idx=nodes.map((n,i)=>[n,i]).filter(([n])=>n.ci===ci&&!n.dead).sort((a,b)=>b[0].w-a[0].w).slice(0,3).map(([,i])=>i); coreLinks.push(...idx); });
+
+const QUESTIONS=[
+  {q:'Should I rebalance before the quarter ends?', region:'finance', cls:'Finance · allocation', aff:{finance:1,engine:.3},
+   rules:[['Quarterly cadence rule','ok'],['Credit sleeve ≤ 48%','ok'],['Drawdown trigger','silent — history too short']],
+   v:'Hold. Rebalance on the scheduled date, not on the mood.', why:['Cadence rule governs; today is not the date','Allocation inside caps — no breach to act on','Drawdown rule has no history yet, so it stays silent'],
+   ai:'The shell would add: the names you are worried about moved with their control group — macro, not thesis. Proposal only.'},
+  {q:'Is the overnight news a signal or noise?', region:'intel', cls:'Intel · event read', aff:{intel:1,finance:.4},
+   rules:[['Control-group spread','ok'],['Post-news price discovery','ok'],['Named-source check','ok']],
+   v:'Noise until the spread opens. Watch, do not act.', why:['Named median tracked the control median — no isolated event','The only post-news session traded the other way','Survivorship: the loud stories are the ones that paid'],
+   ai:'The shell would add: set a one-line alert on the spread so you stop watching the screen. Proposal only.'},
+  {q:'Did the last outreach move actually work?', region:'career', cls:'Career · learned move', aff:{career:1,creative:.3},
+   rules:[['Outcome recorded','ok'],['Sample ≥ 8 for "proven"','no — n = 3'],['Decay since last win','ok']],
+   v:'Lean, not use. Three wins is a survivor, not a proof.', why:['Honest floor at n = 3 is ~44%, not 100%','Move stays a candidate until the sample grows','Keep recording outcomes — advice is only as honest as the feedback'],
+   ai:'The shell would add: the warm-intro variant has the strongest precondition match this week. Proposal only.'},
+];
+function weightsFor(qi){ const Q=QUESTIONS[qi], r2=rng(900+qi), w=new Float32Array(N);
+  for(let i=0;i<N;i++){ const n=nodes[i]; if(n.dead){w[i]=0;continue;} const a=Q.aff[REG[n.ci].id]||0; w[i]=a*(0.35+0.65*n.w)*(0.6+0.4*r2())*(n.title?(a>=0.9?3.5:1.3):1); }
+  const idx=[...w.keys()].sort((a,b)=>w[b]-w[a]).slice(0,8), top=new Set(idx), mx=w[idx[0]]||1;
+  for(let i=0;i<N;i++) w[i]=top.has(i)?0.55+0.45*(w[i]/mx):Math.min(0.18,w[i]*0.25);
+  const path=[idx[0]], left=new Set(idx.slice(1));
+  while(left.size){ let best=null,bd=1e9; for(const j of left){ const d=nodes[path[path.length-1]].p.distanceTo(nodes[j].p); if(d<bd){bd=d;best=j;} } path.push(best); left.delete(best); }
+  return {w,path}; }
+
+/* ---------------- scene ---------------- */
+const canvas=document.getElementById('gl');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+const quality={mode:P.get('quality')||'auto',ratio:Math.min(devicePixelRatio,innerWidth<700?1.25:1.5),slow:0,cooldown:0};
+renderer.setPixelRatio(quality.ratio);
+// the universe is far: the far plane sits at 900, the star shells at 260–350, the galaxies toward 400, the Milky Way
+// band at 820. Everything beyond the ring is also a little FADED (lower gains, lower star opacity), so the near
+// world is the bright thing and the sky is depth, not decoration.
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x080912); scene.fog=new THREE.FogExp2(0x080912,0.0075);
+const camera=new THREE.PerspectiveCamera(56,1,0.1,900);
+// ZOLA physical materials: local HDR reflections, never a replacement for the galaxy background.
+const assetLighting={ready:false,error:null};
+const physicalFill=new THREE.HemisphereLight(0xc6d6ed,0x11131a,0.75); scene.add(physicalFill);
+const physicalKey=new THREE.DirectionalLight(0xffe5bc,2.3); physicalKey.position.set(35,45,40); scene.add(physicalKey);
+const physicalRim=new THREE.DirectionalLight(0xb3a0ef,1.2); physicalRim.position.set(-35,18,-25); scene.add(physicalRim);
+new RGBELoader().load('./assets/materials/studio_small_09_1k.hdr',texture=>{
+  const pmrem=new THREE.PMREMGenerator(renderer); const env=pmrem.fromEquirectangular(texture);
+  scene.environment=env.texture; texture.dispose(); pmrem.dispose(); assetLighting.ready=true;
+  if(STILL && window.__ready) frame();
+},undefined,error=>{ assetLighting.error=String(error); console.warn('Local reflection lighting unavailable; direct lights remain active.',error); });
+function retainPhysicalMaterial(mesh){
+  for(const material of [].concat(mesh.material)){
+    material.toneMapped=false; material.envMapIntensity=0.30; material.fog=false;
+    // Compress only physical-surface highlights; the existing galaxy grading is untouched.
+    material.onBeforeCompile=shader=>{
+      shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',
+        'outgoingLight *= 0.80; outgoingLight = outgoingLight / (vec3(1.0) + outgoingLight);\n#include <opaque_fragment>');
+    };
+    material.customProgramCacheKey=()=> 'zola-physical-highlight-rolloff-v1';
+    if(material.transparent) material.depthWrite=false;
+  }
+  mesh.frustumCulled=false;
+}
+
+const LIME=new THREE.Color(0xd6f84a), DIM=new THREE.Color(0x26262b);
+
+// memories: instanced emitters
+// memories: instanced spheres with a fresnel so near ones read as lit volumes, not flat discs. The renderer adds the
+// USE_INSTANCING / USE_INSTANCING_COLOR defines from the mesh, so the chunks below pick up instanceMatrix and instanceColor.
+const geo=new THREE.SphereGeometry(1,14,10), mat=new THREE.ShaderMaterial({toneMapped:false,
+  vertexShader:`#include <common>
+    varying vec3 vN,vV,vC;
+    void main(){ vec3 transformed=position; vec3 objectNormal=normal;
+      #ifdef USE_INSTANCING
+        transformed=(instanceMatrix*vec4(transformed,1.0)).xyz; objectNormal=mat3(instanceMatrix)*objectNormal;
+      #endif
+      vC=vec3(1.0);
+      #ifdef USE_INSTANCING_COLOR
+        vC=instanceColor;
+      #endif
+      vec4 mv=modelViewMatrix*vec4(transformed,1.0); vN=normalize(normalMatrix*objectNormal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`,
+  fragmentShader:`varying vec3 vN,vV,vC; void main(){ float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),1.6); gl_FragColor=vec4(vC*(0.72+0.9*f),1.0); }`});
+const inst=new THREE.InstancedMesh(geo,mat,N); inst.frustumCulled=false; inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+const colors=new Float32Array(N*3); inst.instanceColor=new THREE.InstancedBufferAttribute(colors,3); scene.add(inst);
+const dummy=new THREE.Object3D(), tmpC=new THREE.Color(), hueC=new THREE.Color(), camPos=new THREE.Vector3();
+let W=new Float32Array(N), PATH=[];
+function paint(t){ camPos.copy(camera.position);
+  for(let i=0;i<N;i++){ const n=nodes[i];
+    if(!n.dead&&!REDUCED){ // memories orbit their landmark — slow, mechanical
+      const a=n.spin*t, c=Math.cos(a), s=Math.sin(a); n.p.set(n.off.x*c-n.off.z*s, n.off.y, n.off.x*s+n.off.z*c).add(REG[n.ci].c); }
+    // subtle by default, loud when it matters: unlit memories are small and dim, the ones the question lit are
+    // twice the size and carry the lime, so the field reads as a quiet sky with a few true signals
+    const base=n.dead?0.06:0.08+0.12*n.w, lit=W[i]>0.5?1+0.3*Math.sin(t*2.4+i)*(REDUCED?0:1):1;
+    const d=n.p.distanceTo(camPos), prox=Math.min(1,Math.max(0,(d-2)/7));
+    const bs=STILL?1:Math.min(1,Math.max(0,(bootT-0.22-(n.off.length()/11)*0.3)/0.4));   // boot: memories appear from the landmark outward
+    const sc=Math.min(0.36,base*(W[i]>0.5?2.2:1))*lit*(prox*prox)*bs;
+    dummy.position.copy(n.p); dummy.scale.setScalar(sc); dummy.updateMatrix(); inst.setMatrixAt(i,dummy.matrix);
+    hueC.copy(REG[n.ci].color);
+    if(n.dead) tmpC.copy(DIM).multiplyScalar(0.9);
+    else if(W[i]>0.5) tmpC.copy(LIME).lerp(hueC,0.14).multiplyScalar(1.3+0.5*(W[i]-0.5)*2);
+    else tmpC.copy(DIM).lerp(hueC,0.4+W[i]*0.9).multiplyScalar(0.46+0.26*n.w);
+    colors[i*3]=tmpC.r;colors[i*3+1]=tmpC.g;colors[i*3+2]=tmpC.b; }
+  inst.instanceMatrix.needsUpdate=true; inst.instanceColor.needsUpdate=true; }
+
+// edges (intra-region) + core links (the brain)
+const E=edges.length+coreLinks.length;
+const ePos=new Float32Array(E*6), eCol=new Float32Array(E*6);
+const eGeo=new THREE.BufferGeometry(); eGeo.setAttribute('position',new THREE.BufferAttribute(ePos,3)); eGeo.setAttribute('color',new THREE.BufferAttribute(eCol,3));
+const lines=new THREE.LineSegments(eGeo,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.48,toneMapped:false})); lines.frustumCulled=false; scene.add(lines);
+function paintEdges(){ let k=0;
+  for(const [a,b] of edges){ nodes[a].p.toArray(ePos,k*6); nodes[b].p.toArray(ePos,k*6+3);
+    const lit=W[a]>0.5&&W[b]>0.5; const c=lit?tmpC.copy(LIME).multiplyScalar(0.9):tmpC.setRGB(0.11,0.11,0.13);
+    for(let s=0;s<2;s++){eCol[k*6+s*3]=c.r;eCol[k*6+s*3+1]=c.g;eCol[k*6+s*3+2]=c.b;} k++; }
+  for(const a of coreLinks){ nodes[a].p.toArray(ePos,k*6); CORE.toArray(ePos,k*6+3);
+    const c=tmpC.copy(REG[nodes[a].ci].color).multiplyScalar(0.28);
+    for(let s=0;s<2;s++){eCol[k*6+s*3]=c.r*(s?0.4:1);eCol[k*6+s*3+1]=c.g*(s?0.4:1);eCol[k*6+s*3+2]=c.b*(s?0.4:1);} k++; }
+  eGeo.attributes.position.needsUpdate=true; eGeo.attributes.color.needsUpdate=true; }
+
+// relevance ribbon
+let ribbon=null, ribbonCurve=null, pulses=null;
+function buildRibbon(){ if(ribbon){scene.remove(ribbon);ribbon.geometry.dispose();scene.remove(pulses);ribbon=null;}
+  if(!PATH.length) return;
+  ribbonCurve=new THREE.CatmullRomCurve3(PATH.map(i=>nodes[i].p.clone()),false,'centripetal',0.5);
+  // a fat line in world units: constant thickness in the scene, so it reads as a drawn path, not a pipe near the camera
+  const pts=ribbonCurve.getPoints(200), flat=[]; pts.forEach(p=>flat.push(p.x,p.y,p.z));
+  const lg=new LineGeometry(); lg.setPositions(flat);
+  const lmat=new LineMaterial({color:LIME.clone().multiplyScalar(1.35),linewidth:0.045,worldUnits:true,transparent:true,opacity:0.85,toneMapped:false,depthWrite:false});
+  lmat.resolution.set(innerWidth,innerHeight);
+  ribbon=new Line2(lg,lmat); ribbon.computeLineDistances(); ribbon.frustumCulled=false; scene.add(ribbon);
+  const pg=new THREE.BufferGeometry(); pg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(18),3));
+  pulses=new THREE.Points(pg,new THREE.PointsMaterial({color:LIME.clone().multiplyScalar(3),size:0.45,toneMapped:false,transparent:true,opacity:0.9})); pulses.frustumCulled=false; scene.add(pulses); }
+
+// space: near dust (drifts with the scene) + a far star shell (does not — it is the vastness)
+const DUST=5200, dp=new Float32Array(DUST*3), dr=rng(7);
+for(let i=0;i<DUST;i++){ dp[i*3]=(dr()-.5)*220; dp[i*3+1]=(dr()-.5)*120; dp[i*3+2]=(dr()-.5)*220; }
+const dust=new THREE.Points(new THREE.BufferGeometry().setAttribute('position',new THREE.BufferAttribute(dp,3)),new THREE.PointsMaterial({color:0x3a3a42,size:0.06,transparent:true,opacity:0.3}));
+dust.frustumCulled=false; scene.add(dust);
+// far stars: two shells, each shimmering on its own clock and drifting the other way — the sky breathes
+function starShell(count,seed,size){ const p=new Float32Array(count*3), c=new Float32Array(count*3), r0=rng(seed);
+  for(let i=0;i<count;i++){ const r=260+r0()*90, th=r0()*Math.PI*2, ph=Math.acos(2*r0()-1);
+    p[i*3]=r*Math.sin(ph)*Math.cos(th); p[i*3+1]=r*Math.cos(ph); p[i*3+2]=r*Math.sin(ph)*Math.sin(th);
+    const b=0.3+Math.pow(r0(),3)*0.7, warm=r0()<0.15; c[i*3]=b*(warm?1:0.82); c[i*3+1]=b*(warm?0.9:0.86); c[i*3+2]=b*(warm?0.72:1); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.setAttribute('color',new THREE.BufferAttribute(c,3));
+  const s=new THREE.Points(g,new THREE.PointsMaterial({size,vertexColors:true,transparent:true,opacity:0.5,sizeAttenuation:true,fog:false,depthWrite:false}));
+  s.frustumCulled=false; scene.add(s); return s; }
+const starsA=starShell(4200,11,1.0), starsB=starShell(2800,13,1.45);
+// colour depth: three faint nebulae — huge soft additive points in the region hues, far behind the ring.
+// Deep space is not black; it is very dark colour. Kept well under the bloom threshold.
+// a point is a square unless you give it a soft sprite — this radial fade is what makes glow read as glow
+const spriteTex=(()=>{ const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d');
+  const gr=x.createRadialGradient(32,32,0,32,32,32); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(0.35,'rgba(255,255,255,.55)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=gr; x.fillRect(0,0,64,64); const tx=new THREE.CanvasTexture(c); tx.colorSpace=THREE.SRGBColorSpace; return tx; })();
+// Galaxies, not fog: points laid along logarithmic spiral arms with a warm bulge and a thin disc, tilted toward us and
+// turning imperceptibly. Three far behind the ring in the region hues, additive and well under the bloom threshold.
+// A galaxy is two layers. (1) Gas: one disc with a procedural shader — fbm noise shaped into spiral arms, a hot bulge,
+// darker dust between the arms — this is what reads as a photograph rather than confetti. (2) Stars: a shader point
+// cloud (the Three.js Journey recipe: branch angle + spin by radius + randomness that tightens toward the core) with
+// per-point size, a soft radial falloff, and DIFFERENTIAL rotation in the vertex shader — the inside turns faster than
+// the rim, which is the one motion that says "galaxy" and not "disc".
+const GAL_NOISE=`vec3 h3(vec3 p){ p=vec3(dot(p,vec3(127.1,311.7,74.7)),dot(p,vec3(269.5,183.3,246.1)),dot(p,vec3(113.5,271.9,124.6))); return -1.0+2.0*fract(sin(p)*43758.5453123); }
+float sn(vec3 p){ vec3 i=floor(p), f=fract(p), u=f*f*(3.0-2.0*f);
+  return mix(mix(mix(dot(h3(i+vec3(0,0,0)),f-vec3(0,0,0)),dot(h3(i+vec3(1,0,0)),f-vec3(1,0,0)),u.x),mix(dot(h3(i+vec3(0,1,0)),f-vec3(0,1,0)),dot(h3(i+vec3(1,1,0)),f-vec3(1,1,0)),u.x),u.y),
+             mix(mix(dot(h3(i+vec3(0,0,1)),f-vec3(0,0,1)),dot(h3(i+vec3(1,0,1)),f-vec3(1,0,1)),u.x),mix(dot(h3(i+vec3(0,1,1)),f-vec3(0,1,1)),dot(h3(i+vec3(1,1,1)),f-vec3(1,1,1)),u.x),u.y),u.z); }
+float fbm(vec3 p){ float v=0.0, a=0.5; for(int i=0;i<5;i++){ v+=a*sn(p); p=p*2.03+vec3(1.7,9.2,3.1); a*=0.5; } return v; }`;
+const GAS_FS=`uniform vec3 cIn,cOut,cDust; uniform float t,arms,twist,gain; varying vec2 vUv; ${GAL_NOISE}
+void main(){ vec2 q=vUv*2.0-1.0; float r=length(q); if(r>1.0) discard; float ang=atan(q.y,q.x);
+  float spiral=ang*arms-log(r+0.05)*twist; float arm=0.5+0.5*cos(spiral);
+  arm=pow(clamp(arm,0.0,1.0),2.2);
+  float n=fbm(vec3(q*3.2,t*0.015)); float n2=fbm(vec3(q*9.0+3.0,t*0.02)); float n3=fbm(vec3(q*18.0-5.0,t*0.03));
+  float disc=exp(-r*r*3.4);
+  float fil=0.45+0.55*smoothstep(-0.25,0.45,n2)*(0.6+0.4*smoothstep(-0.2,0.4,n3));
+  float gas=disc*(0.22+0.78*arm)*(0.55+0.45*(n+0.5))*fil*smoothstep(1.0,0.72,r);
+  float bulge=exp(-r*r*60.0)*2.6+exp(-r*r*14.0)*0.5;
+  float dust=smoothstep(0.3,0.75,n2+0.5)*(1.0-arm)*smoothstep(0.08,0.35,r)*disc;
+  vec3 col=mix(cIn,cOut,smoothstep(0.0,0.75,r))*gas+cIn*bulge;
+  col=mix(col,cDust*gas*0.5,dust*0.7);
+  gl_FragColor=vec4(max(col*gain,0.0),1.0); }`;
+const GAS_VS=`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`;
+const STAR_VS=`attribute float aScale; attribute float aR; attribute float aTw; uniform float t,uSize,uPR; varying vec3 vC; varying float vTw;
+void main(){ vec3 p=position; float ang=atan(p.z,p.x); float r=length(p.xz);
+  ang+=t*0.012/(0.18+aR);
+  p.x=cos(ang)*r; p.z=sin(ang)*r;
+  vec4 mv=modelViewMatrix*vec4(p,1.0); gl_Position=projectionMatrix*mv;
+  gl_PointSize=uSize*aScale*uPR*(90.0/-mv.z); vC=color; vTw=aTw; }`;
+const STAR_FS=`uniform float t,gain; varying vec3 vC; varying float vTw;
+void main(){ float d=length(gl_PointCoord-0.5)*2.0; if(d>1.0) discard; float a=pow(clamp(1.0-d,0.0,1.0),2.6); a*=0.8+0.2*sin(t*1.7+vTw*6.2831);
+  gl_FragColor=vec4(max(vC*a*gain,0.0),1.0); }`;
+const galaxyMats=[];
+function galaxy(hex,center,radius,count,seed,tilt,op=0.55){
+  const r0=rng(seed), hue=new THREE.Color(hex), warm=new THREE.Color(0xfff1d6), arms=2+(seed%2);
+  const grp=new THREE.Group(); grp.position.copy(center); grp.rotation.set(tilt[0],tilt[1],tilt[2]); grp.frustumCulled=false;
+  const gasM=new THREE.ShaderMaterial({uniforms:{cIn:{value:warm.clone().lerp(hue,0.4)},cOut:{value:hue.clone()},cDust:{value:new THREE.Color(0x120a1a)},t:{value:0},arms:{value:arms},twist:{value:4.6},gain:{value:0.09*op/0.55}},
+    vertexShader:GAS_VS,fragmentShader:GAS_FS,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false,toneMapped:false});
+  const gas=new THREE.Mesh(new THREE.PlaneGeometry(radius*2.2,radius*2.2),gasM); gas.rotation.x=-Math.PI/2; gas.frustumCulled=false; grp.add(gas);
+  const p=new Float32Array(count*3), c=new Float32Array(count*3), sc=new Float32Array(count), rr=new Float32Array(count), tw=new Float32Array(count);
+  for(let i=0;i<count;i++){ const rad=Math.pow(r0(),1.35)*radius; const branch=(i%arms)/arms*Math.PI*2; const spin=rad/radius*4.6;
+    const rnd=()=>Math.pow(r0(),3)*(r0()<0.5?1:-1)*0.32*rad;
+    const rx=rnd(), rz=rnd(), ry=Math.pow(r0(),3)*(r0()<0.5?1:-1)*0.05*radius*(1-0.6*rad/radius);
+    p[i*3]=Math.cos(branch+spin)*rad+rx; p[i*3+1]=ry; p[i*3+2]=Math.sin(branch+spin)*rad+rz;
+    const col=warm.clone().lerp(hue,Math.min(1,rad/radius*1.3)); const b=rad/radius<0.12?1.3:0.6+0.5*r0();
+    c[i*3]=col.r*b; c[i*3+1]=col.g*b; c[i*3+2]=col.b*b; sc[i]=0.4+Math.pow(r0(),2.5)*1.6; rr[i]=rad/radius; tw[i]=r0(); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.setAttribute('color',new THREE.BufferAttribute(c,3));
+  g.setAttribute('aScale',new THREE.BufferAttribute(sc,1)); g.setAttribute('aR',new THREE.BufferAttribute(rr,1)); g.setAttribute('aTw',new THREE.BufferAttribute(tw,1));
+  const starM=new THREE.ShaderMaterial({uniforms:{t:{value:0},uSize:{value:radius*0.034},uPR:{value:Math.min(devicePixelRatio,2)},gain:{value:0.34*op/0.55}},
+    vertexShader:STAR_VS,fragmentShader:STAR_FS,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false});
+  const pts=new THREE.Points(g,starM); pts.frustumCulled=false; grp.add(pts);
+  galaxyMats.push(gasM,starM); scene.add(grp); return grp; }
+// placed in the overview camera's frame so they sit behind the ring on first load: forward = from the resting camera
+// through the core; right/up from that. Far enough to sit beyond every cluster, inside the far plane.
+const camRest=new THREE.Vector3(60*Math.sin(1.14)*Math.cos(0.6),60*Math.cos(1.14),60*Math.sin(1.14)*Math.sin(0.6));
+const gF=camRest.clone().negate().normalize(), gR=new THREE.Vector3().crossVectors(gF,new THREE.Vector3(0,1,0)).normalize(), gU=new THREE.Vector3().crossVectors(gR,gF);
+const gPos=(d,x,y)=>gF.clone().multiplyScalar(d).addScaledVector(gR,x).addScaledVector(gU,y);
+// farther and larger: each galaxy is a VAST object seen across a gulf, so it is pushed toward the far plane
+// and scaled up so its angular size grows rather than shrinks. More stars per galaxy for arm detail.
+const nebulae=[ galaxy(0xc4a8ff,gPos(400,250,145),150,5200,21,[1.1,0.3,0.4],0.46), galaxy(0x5ee6c1,gPos(370,-300,-112),105,3200,22,[0.9,-0.5,0.2],0.3), galaxy(0xe3c98f,gPos(440,345,-95),125,4200,23,[1.3,0.2,-0.6],0.34) ];
+starsA.material.map=spriteTex; starsB.material.map=spriteTex; dust.material.map=spriteTex; // round stars, round dust
+nebulae.forEach(nb=>{ nb.scale.multiplyScalar(0.85); nb.position.multiplyScalar(1.18); });   // farther and smaller: background, not subject
+// The Milky Way: we are INSIDE a galaxy, so its disc is a band across the whole sky, not an object in it.
+// An inverted sphere just inside the far plane carries a shader: band density falls off with latitude from
+// a tilted galactic plane, fbm breaks it into clouds, a second higher-frequency fbm cuts DARK DUST LANES
+// through the brightest part (the one thing every fake Milky Way lacks), and the bulge brightens toward one
+// direction with a warm colour while the arms run cool. A fourth star shell is concentrated along the same
+// plane so the stars thicken where the gas does.
+// oriented in the resting camera's frame, like the spirals: the pole is perpendicular to the view direction so
+// the band is a great circle THROUGH the frame, tilted about 32° off the horizon; the bulge sits in the plane,
+// swung to the upper right of the view so the brightest part never sits behind the eye.
+const MW_N=gU.clone().multiplyScalar(0.85).addScaledVector(gR,0.53).normalize();
+const MW_C=gF.clone().applyAxisAngle(MW_N,-0.95).normalize();
+const MW_FS=`uniform vec3 N,C,cWarm,cCool,cDust; uniform float t,gain; varying vec3 vDir; ${GAL_NOISE}
+void main(){ vec3 d=normalize(vDir); float lat=asin(clamp(dot(d,N),-1.0,1.0));
+  float toC=max(dot(normalize(d-N*dot(d,N)),C),0.0);
+  float width=0.21+0.13*pow(toC,2.0);
+  float band=exp(-(lat*lat)/(width*width));
+  float cloud=0.65+0.35*(fbm(d*4.0+vec3(t*0.002))+0.5);
+  float cloud2=0.6+0.4*(fbm(d*11.0+7.0)+0.5);
+  float dust=smoothstep(0.46,0.78,fbm(d*12.0+vec3(3.0,1.0,5.0))+0.5)*exp(-(lat*lat)/(0.10*0.10));   // lanes: broad but present — the division that makes it a galaxy
+  float bulge=pow(toC,7.0)*exp(-(lat*lat)/(0.12*0.12))*1.6;
+  float g=band*cloud*cloud2;
+  vec3 col=mix(cCool,cWarm,pow(toC,3.0))*g+cWarm*bulge;
+  col=mix(col,cDust*g*0.4,dust*0.86);
+  // the envelope: a very wide, very faint haze around the plane, brighter toward the core — this is what makes it read as a galaxy you are inside, not a stripe
+  float env=exp(-(lat*lat)/(0.55*0.55))*(0.55+0.45*(fbm(d*2.2+vec3(1.7))+0.5))*(0.25+0.75*pow(toC,1.5));
+  col+=mix(cCool,cWarm,pow(toC,2.0))*env*0.5;
+  gl_FragColor=vec4(max(col*gain,0.0),1.0); }`;
+const MW_VS=`varying vec3 vDir; void main(){ vDir=(modelMatrix*vec4(position,0.0)).xyz; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`;
+const milkyM=new THREE.ShaderMaterial({uniforms:{N:{value:MW_N},C:{value:MW_C},cWarm:{value:new THREE.Color(0xffe0b4)},cCool:{value:new THREE.Color(0x9fb0ff)},cDust:{value:new THREE.Color(0x0d0810)},t:{value:0},gain:{value:0.074}},
+  vertexShader:MW_VS,fragmentShader:MW_FS,side:THREE.BackSide,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false});
+const milky=new THREE.Mesh(new THREE.SphereGeometry(820,48,32),milkyM); milky.frustumCulled=false; scene.add(milky); galaxyMats.push(milkyM);
+// band stars: thousands of faint points whose latitude is gaussian about the galactic plane
+const starsC=(()=>{ const n=7000, p=new Float32Array(n*3), c=new Float32Array(n*3), r0=rng(17);
+  const U=new THREE.Vector3().crossVectors(MW_N,MW_C).normalize();
+  for(let i=0;i<n;i++){ const ang=r0()*Math.PI*2; const g=Math.sqrt(-2*Math.log(r0()+1e-6))*Math.cos(2*Math.PI*r0()); const lat=g*0.11; const r=270+r0()*80;
+    const v=new THREE.Vector3().addScaledVector(MW_C,Math.cos(ang)*Math.cos(lat)).addScaledVector(U,Math.sin(ang)*Math.cos(lat)).addScaledVector(MW_N,Math.sin(lat)).multiplyScalar(r);
+    p[i*3]=v.x; p[i*3+1]=v.y; p[i*3+2]=v.z; const b=0.18+Math.pow(r0(),4)*0.6, warm=r0()<0.3; c[i*3]=b*(warm?1:0.78); c[i*3+1]=b*(warm?0.88:0.84); c[i*3+2]=b*(warm?0.7:1); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.setAttribute('color',new THREE.BufferAttribute(c,3));
+  const s=new THREE.Points(g,new THREE.PointsMaterial({size:0.7,vertexColors:true,transparent:true,opacity:0.5,sizeAttenuation:true,fog:false,depthWrite:false,map:spriteTex,blending:THREE.AdditiveBlending}));
+  s.frustumCulled=false; scene.add(s); return s; })();
+
+// Distant cloud noise is static celestial structure, cached once rather than evaluated per pixel every frame.
+const skyCache=new THREE.WebGLCubeRenderTarget(innerWidth<700?256:512,{type:THREE.HalfFloatType,generateMipmaps:true,minFilter:THREE.LinearMipmapLinearFilter});
+const skyScene=new THREE.Scene(); skyScene.background=new THREE.Color(0x080912);
+milkyM.uniforms.cWarm.value.set(0xf4d9ac); milkyM.uniforms.cCool.value.set(0x9a87e3); milkyM.uniforms.gain.value=.10;
+const cachedCloud=new THREE.Mesh(milky.geometry,milkyM); skyScene.add(cachedCloud);
+new THREE.CubeCamera(.1,900,skyCache).update(renderer,skyScene);
+scene.background=skyCache.texture; milky.visible=false;
+const divine=createDivineField(scene,REG,REDUCED);
+
+/* ---------------- landmarks: procedural now, .glb when one exists ---------------- */
+// Material rule for every landmark: an emitter core (above bloom threshold) wrapped in a dim wire body —
+// the glow is the identity, the wire is the structure. Never a lit, shaded solid.
+// Emitter = fresnel glow: the floor stays above the bloom threshold so every core blooms, and the rim runs
+// brighter than the middle so a core reads as a volume with light inside it, not a flat disc.
+const EMIT_VS=`varying vec3 vN,vV; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`;
+const EMIT_FS=`uniform vec3 c; uniform float m; varying vec3 vN,vV; void main(){ float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),2.0); gl_FragColor=vec4(c*(m*0.85+m*0.95*f),1.0); }`;
+function emit(hex,m=1.3){ const mt=new THREE.ShaderMaterial({uniforms:{c:{value:new THREE.Color(hex)},m:{value:m}},vertexShader:EMIT_VS,fragmentShader:EMIT_FS,toneMapped:false,side:THREE.DoubleSide}); mt.userData.emit=true; return mt; }
+function wire(hex,o=0.35){ const mt=new THREE.MeshBasicMaterial({color:new THREE.Color(hex).multiplyScalar(0.7),wireframe:true,transparent:true,opacity:o,toneMapped:false}); mt.userData.wire={hex,o}; return mt; }
+// Dense wire meshes (sphere shells, sculpted parts) stack their triangles into grey mush. Above a face budget the
+// mesh becomes its own vertex cloud instead: a speckled shell that reads as volume and fades with distance like dust.
+function wirify(root){ const swap=[];
+  root.traverse(ch=>{ if(ch.isMesh&&ch.material.userData.wire&&ch.geometry.index&&ch.geometry.index.count/3>1700) swap.push(ch); });   // exported rings are ≤1536 tris and stay lines; dense shells and sculpts become clouds
+  swap.forEach(ch=>{ const {hex,o}=ch.material.userData.wire; const pts=new THREE.Points(ch.geometry,new THREE.PointsMaterial({color:new THREE.Color(hex).multiplyScalar(0.8),size:0.075,map:spriteTex,transparent:true,opacity:Math.min(0.9,o+0.35),depthWrite:false,sizeAttenuation:true}));
+    pts.position.copy(ch.position); pts.rotation.copy(ch.rotation); pts.scale.copy(ch.scale); pts.name=ch.name; pts.frustumCulled=false; ch.parent.add(pts); ch.parent.remove(ch); }); return root; }
+// SOLID: the eye's material family for the planets. A dark glossy body lit by ONE key light (from the galactic core, so every
+// planet shows a lit face and a shadow face), a Blinn highlight, a fresnel rim in the region hue, and a faint inner emission so the
+// hue survives at distance. Same shader on all five; only the shape differs.
+const SOLID_VS=`varying vec3 vN,vV,vW; void main(){ vec4 w=modelMatrix*vec4(position,1.0); vW=w.xyz; vN=normalize(mat3(modelMatrix)*normal); vV=normalize(cameraPosition-w.xyz); gl_Position=projectionMatrix*viewMatrix*w; }`;
+const SOLID_FS=`uniform vec3 hue,L; uniform float glow; varying vec3 vN,vV,vW;
+void main(){ vec3 n=normalize(vN); if(!gl_FrontFacing) n=-n; vec3 v=normalize(vV);
+  float nl=dot(n,L); float dif=smoothstep(-0.35,0.9,nl);                       // soft terminator: a lit side and a shadow side
+  vec3 h=normalize(L+v); float spec=pow(max(dot(n,h),0.0),64.0);
+  float f=pow(1.0-max(dot(n,v),0.0),2.4);
+  vec3 body=vec3(0.055,0.056,0.066)+hue*0.05;
+  vec3 col=body*(0.35+0.95*dif) + vec3(1.0)*spec*0.42 + hue*f*0.42 + hue*glow;
+  gl_FragColor=vec4(col,1.0); }`;
+const BODY_FS=`uniform vec3 hue,L; uniform float t; varying vec3 vN,vV,vW,vP;
+float h(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+float nz(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y); }
+void main(){ vec3 n=normalize(vN); if(!gl_FrontFacing) n=-n; vec3 v=normalize(vV);
+  float nv=max(dot(n,v),0.0); float f=pow(1.0-nv,2.6);
+  // fibres running over the body like iris fibres, lit from inside; they rotate slowly on the shared clock
+  vec3 q=normalize(vP); float az=atan(q.y,q.x), el=asin(clamp(q.z,-1.0,1.0));
+  float fib=0.25+0.95*(0.65*pow(nz(vec2(az*44.0+t*0.02,el*6.0)),1.6)+0.35*nz(vec2(az*13.0,el*22.0)));   // stronger: deeper troughs, brighter strands
+  float nl=dot(n,L); float dif=smoothstep(-0.3,0.9,nl);
+  vec3 shell=vec3(0.05,0.05,0.062)*(0.4+0.9*dif);
+  vec3 inner=hue*fib*(0.16+0.34*nv)*(0.55+0.45*dif);              // luminous from within where the surface faces you
+  float core=pow(nv,14.0);                                            // the facing core: the planet's pupil, reads at distance
+  vec3 h2=normalize(L+v); float spec=pow(max(dot(n,h2),0.0),90.0);
+  float cat=pow(max(dot(n,normalize(vec3(-0.45,0.55,0.75))),0.0),160.0);
+  vec3 col=shell+inner+hue*f*0.5+hue*core*0.55+vec3(1.0)*(spec*0.5+cat*0.8);
+  gl_FragColor=vec4(col,1.0); }`;
+const BODY_VS=`varying vec3 vN,vV,vW,vP; void main(){ vP=position; vec4 w=modelMatrix*vec4(position,1.0); vW=w.xyz; vN=normalize(mat3(modelMatrix)*normal); vV=normalize(cameraPosition-w.xyz); gl_Position=projectionMatrix*viewMatrix*w; }`;
+const bodyMats=[];
+function bodyMat(hex,Lw){ const m=new THREE.ShaderMaterial({uniforms:{hue:{value:new THREE.Color(hex)},L:{value:Lw.clone().normalize()},t:{value:0}},vertexShader:BODY_VS,fragmentShader:BODY_FS,toneMapped:false}); bodyMats.push(m); return m; }
+function solid(hex,Lw,glow=0.06){ return new THREE.ShaderMaterial({uniforms:{hue:{value:new THREE.Color(hex)},L:{value:Lw.clone().normalize()},glow:{value:glow}},vertexShader:SOLID_VS,fragmentShader:SOLID_FS,toneMapped:false,side:THREE.DoubleSide}); }
+// Contact glow: a soft disc of the region hue under each landmark, additive, under bloom — the landmark belongs to its cluster.
+function contact(hex,scale=6.5){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:spriteTex,color:new THREE.Color(hex).multiplyScalar(0.13),transparent:true,opacity:0.38,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false})); s.scale.setScalar(scale); return s; }
+const LANDMARK={
+  finance(g){ const o=new THREE.Group(); for(let i=0;i<4;i++){ const r=new THREE.Mesh(new THREE.TorusGeometry(1.9+i*0.55,0.045,8,96),i===1?emit(g.hex,1.4):wire(g.hex,0.55)); r.rotation.x=Math.PI/2; r.position.y=(i-1.5)*0.55; r.userData.spin=0.08*(i%2?1:-1); o.add(r);}
+    o.add(new THREE.Mesh(new THREE.SphereGeometry(0.55,24,16),emit(g.hex,1.6))); return o; },
+  career(g){ const o=new THREE.Group(); const pts=[]; for(let i=0;i<=200;i++){ const t=i/200, a=t*Math.PI*6; pts.push(new THREE.Vector3(Math.cos(a)*(1.3+t*0.9), -3+t*6, Math.sin(a)*(1.3+t*0.9))); }
+    o.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),300,0.06,6,false),emit(g.hex,1.3)));
+    for(let k=0;k<6;k++){ const t=k/5, a=t*Math.PI*6; const s=new THREE.Mesh(new THREE.SphereGeometry(0.22,12,8),k<4?emit(g.hex,1.5):wire(g.hex,0.9)); s.position.set(Math.cos(a)*(1.3+t*0.9),-3+t*6,Math.sin(a)*(1.3+t*0.9)); o.add(s);} return o; },
+  creative(g){ const o=new THREE.Group(); const pts=[]; for(let i=0;i<=160;i++){ const t=i/160; pts.push(new THREE.Vector3((t-.5)*7, Math.sin(t*Math.PI*3)*1.4+Math.sin(t*17)*0.25, Math.cos(t*Math.PI*2)*1.2)); }
+    const c=new THREE.CatmullRomCurve3(pts); o.add(new THREE.Mesh(new THREE.TubeGeometry(c,240,0.16,10,false),wire(g.hex,0.5)));
+    o.add(new THREE.Mesh(new THREE.TubeGeometry(c,240,0.05,6,false),emit(g.hex,1.4))); return o; },
+  intel(g){ const o=new THREE.Group(); const disc=new THREE.Mesh(new THREE.RingGeometry(0.4,3.2,96,6),wire(g.hex,0.3)); disc.rotation.x=-Math.PI/2; o.add(disc);
+    for(const r of [1.2,2.2,3.2]){ const ring=new THREE.Mesh(new THREE.TorusGeometry(r,0.025,6,96),wire(g.hex,0.6)); ring.rotation.x=Math.PI/2; o.add(ring);}
+    const arm=new THREE.Mesh(new THREE.PlaneGeometry(3.2,0.08),emit(g.hex,1.5)); arm.position.x=1.6; arm.rotation.x=-Math.PI/2; const piv=new THREE.Group(); piv.add(arm); piv.userData.spin=0.9; o.add(piv);
+    const ping=new THREE.Mesh(new THREE.SphereGeometry(0.16,12,8),emit(g.hex,2.2)); ping.position.set(1.1,0.05,-1.9); o.add(ping); return o; },
+  engine(g){ const o=new THREE.Group(); o.add(new THREE.Mesh(new THREE.IcosahedronGeometry(2.4,1),wire(g.hex,0.5)));
+    o.add(new THREE.Mesh(new THREE.IcosahedronGeometry(1.1,0),emit(g.hex,1.5)));
+    for(let k=0;k<5;k++){ const b=new THREE.Mesh(new THREE.OctahedronGeometry(0.35,0),k%2?emit(g.hex,1.2):wire(g.hex,0.8)); const a=k/5*Math.PI*2; b.position.set(Math.cos(a)*3.3,Math.sin(k*1.7)*1.2,Math.sin(a)*3.3); o.add(b);}
+    o.userData.spin=0.05; return o; },
+};
+const landmarks=[]; const gltf=new GLTFLoader();
+REG.forEach((g,ci)=>{ const lm=wirify(LANDMARK[g.id](g)); lm.position.copy(g.c); lm.userData.ci=ci; scene.add(lm); landmarks.push(lm);
+  const cg=contact(g.hex); cg.position.copy(g.c); scene.add(cg);
+  // Blender route: drop assets/<region>.glb in and it replaces the procedural landmark, same hue material rules applied
+  gltf.load(`assets/${g.id}.glb`,(res)=>{ const m=res.scene;
+    // material rule for Blender assets: ONE emitter (the mesh named emit_core), everything else dim wire.
+    // Dense sculpted meshes stack their wireframes, so they get far less opacity than the procedural ones.
+    // material rule, the eye's family: ONE emitter (emit_core) blooms; other emit_* parts glow softly; every other part is a lit solid.
+    const Lw=g.c.clone().negate();   // key light from the galactic core
+    m.traverse(ch=>{ if(ch.isMesh){ const n=ch.name.toLowerCase(); if(ch.userData.zolaPBR){ retainPhysicalMaterial(ch); m.userData.pbr=true; } else { ch.material = n==='solid_body'?bodyMat(g.hex,Lw):n==='emit_core'?solid(g.hex,Lw,0.42):(n.startsWith('emit')?solid(g.hex,Lw,0.22):solid(g.hex,Lw)); } ch.frustumCulled=false; if(n==='emit_core'){ ch.updateWorldMatrix(true,false); m.userData.coreMesh=ch; } }
+      else if(ch.isLine){ ch.material=new THREE.LineBasicMaterial({color:g.hex,transparent:true,opacity:0.35,toneMapped:false}); } });
+    m.scale.setScalar(0.8); m.userData.base=0.8; m.position.copy(g.c); m.userData.ci=ci; m.userData.spin=0.04; scene.remove(lm); scene.add(m); landmarks[ci]=m; if(typeof dress==='function') dress(m,ci); if(STILL&&window.__ready) frame(); },undefined,()=>{}); });
+// Idle motion per landmark, one rule each, all on the shared clock. Finance rings precess on different axes, the radar
+// sweeps, the helix breathes upward, the ribbon rolls, the crystal turns in steps — a thing with mass, not a spinning icon.
+const IDLE={
+  finance(lm,t,dt){ // the instrument: orbit rings turn about their own axes at three rates (coins ride with them), the dial creeps, the needle hunts
+    lm.traverse(ch=>{ const n=ch.name; if(/wire_orbit_a/.test(n)) ch[lm.userData.pbr?'rotateY':'rotateZ'](dt*0.22); else if(/wire_orbit_b/.test(n)) ch[lm.userData.pbr?'rotateY':'rotateZ'](-dt*0.15); else if(/wire_orbit_c/.test(n)) ch[lm.userData.pbr?'rotateY':'rotateZ'](dt*0.1);
+      else if(/wire_dial$/.test(n)) ch.rotation.z=-t*0.03; else if(/needle_pivot/.test(n)) ch.rotation[lm.userData.pbr?'y':'z']=Math.sin(t*0.7)*0.18+Math.sin(t*2.9)*0.02; });
+    lm.rotation.y+=dt*0.015; },
+  career(lm,t,dt){ // the ladder turns slowly; the cage counter-turns so the rails read against something; the goal halo tilts
+    lm.rotation.y+=dt*0.05; lm.position.y=REG[1].c.y+Math.sin(t*0.6)*0.18;
+    lm.traverse(ch=>{ const n=ch.name; if(/wire_cage/.test(n)) ch.rotation[lm.userData.pbr?'y':'z']=-t*0.09; else if(/wire_halo/.test(n)) ch.rotation.z=t*0.4; }); },
+  creative(lm,t,dt){ // the ribbon breathes and turns; the band of cells turns the other way, so made/unmade cells pass behind the work
+    lm.rotation.y+=dt*0.03; lm.rotation.x=Math.sin(t*0.35)*0.18;
+    lm.traverse(ch=>{ if(ch.name==='wire_band') ch.rotation[lm.userData.pbr?'y':'z']=-t*0.07; }); },
+  intel(lm,t,dt){ // the sweep turns in the DISH plane (glTF is Y-up: the dish lies in XZ, so the spin axis is Y), clockwise seen from above;
+    // the two detection rings keep their tilt from the file and precess about the same axis; the mast tip is the one fixed light
+    lm.traverse(ch=>{ const n=ch.name; if(!(n==='sweep_pivot'||ch.userData.spin>0.5||n==='wire_cone_a'||n==='wire_cone_b')) return;
+      if(!ch.userData.e0) ch.userData.e0=ch.rotation.clone(); const e=ch.userData.e0;
+      const w = (n==='sweep_pivot'||ch.userData.spin>0.5) ? -0.9 : n==='wire_cone_a' ? 0.25 : -0.18;
+      ch.rotation.set(e.x, e.y + t*w, e.z); }); },
+  engine(lm,t,dt){ // the stack: plates index in alternate directions in discrete steps, like a machine settling; the whole thing bobs
+    const step=Math.PI/9, ph=(t*0.35)%1, e=ph<0.18?(1-Math.cos(ph/0.18*Math.PI))/2:1, k=Math.floor(t*0.35)*step+e*step;
+    lm.traverse(ch=>{ const m=/wire_plate(\d)$/.exec(ch.name); if(m) ch.rotation[lm.userData.pbr?'y':'z']=(+m[1]%2?-1:1)*k*0.5; });
+    lm.rotation.y=k*0.3; lm.position.y=REG[4].c.y+Math.sin(t*0.5)*0.1; },
+};
+// the core: THE EYE — ZOLA's mark. A dark sclera, a bright pupil, an iris ring, and a crown of spikes
+// (the chrome spiked eye from the main shell, read as light instead of metal). Spikes are unequal on
+// purpose: equal spikes read as a gear.
+const core=new THREE.Group();
+scene.add(core);
+/* ---- the eye, structural: one sphere, one shader. Angles from the +Z axis decide what a fragment is. ---- */
+const EYE_FS=`uniform vec3 cIris,cSclera; uniform float dil,boot,t; varying vec3 vN,vV,vP;
+float h(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+float nz(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y); }
+void main(){ vec3 n=normalize(vP); float ang=acos(clamp(n.z,-1.0,1.0)); float az=atan(n.y,n.x);
+  float pr=0.21*dil, ir=0.74, lim=0.05;
+  // iris: radial fibres — streaks that run from pupil to limbus (high angular frequency, low radial), broken by two octaves
+  // of noise; brighter and warmer near the pupil (the collarette), darker toward the limbus; a dark limbal ring; a thin
+  // dark border at the pupil. A hair of slow rotation so it is never dead.
+  float rr=(ang-pr)/max(ir-pr,0.001);
+  float streak=pow(nz(vec2(az*64.0+t*0.015,rr*2.0)),1.4);
+  float fib=0.42+0.58*(0.55*streak+0.30*nz(vec2(az*17.0,rr*9.0))+0.15*nz(vec2(az*41.0,rr*26.0)));
+  float ring=smoothstep(pr,pr+0.012,ang)*(1.0-smoothstep(ir-lim,ir,ang));
+  float limbal=1.0-0.62*smoothstep(ir-0.16,ir-lim,ang);
+  float border=smoothstep(pr,pr+0.035,ang);
+  vec3 irisIn=cIris*vec3(1.08,1.04,0.75), irisOut=cIris*vec3(0.42,0.56,0.22);
+  vec3 iris=mix(irisIn,irisOut,smoothstep(0.0,1.0,rr))*fib*limbal*(0.35+0.65*border);
+  // pupil: the one blown highlight — above 1.0 so only it blooms; soft edge
+  float pup=1.0-smoothstep(pr-0.025,pr+0.01,ang);
+  vec3 col=mix(cSclera,iris,ring);
+  // fresnel rim on the sclera, in the iris colour, very low
+  float f=pow(1.0-abs(dot(normalize(vN),normalize(vV))),2.2);
+  col+=cIris*f*0.10*(1.0-ring);
+  // cornea: a hard catch-light up-left of the pupil, as a reflection of one light would sit
+  float cat=pow(max(dot(n,normalize(vec3(-0.45,0.55,0.75))),0.0),140.0);
+  col+=vec3(1.0)*cat*0.9;
+  col=mix(col,vec3(1.45),pup);
+  gl_FragColor=vec4(col*boot,1.0); }`;
+const EYE_VS=`varying vec3 vN,vV,vP; void main(){ vP=position; vec4 mv=modelViewMatrix*vec4(position,1.0); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`;
+const eyeMat=new THREE.ShaderMaterial({uniforms:{cIris:{value:new THREE.Color(0xd6f84a)},cSclera:{value:new THREE.Color(0x0c0c10)},dil:{value:1.0},boot:{value:STILL?1:0},t:{value:0}},vertexShader:EYE_VS,fragmentShader:EYE_FS,toneMapped:false});
+const gaze=new THREE.Group(); core.add(gaze); core.userData.gaze=gaze;
+const eyeball=new THREE.Mesh(new THREE.SphereGeometry(2.05,96,64),eyeMat); gaze.add(eyeball); core.userData.eyeball=eyeball;
+// the pupil as a mesh too: the god-ray sun. Sits just under the surface on the axis.
+const sun=new THREE.Mesh(new THREE.SphereGeometry(0.40,24,16),new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false})); sun.position.z=1.98; gaze.add(sun); core.userData.sun=sun;   // breaks the surface a little: the god rays need to see it
+// lids: two dark caps that close over the sphere — a blink that actually closes
+const lidM=new THREE.MeshBasicMaterial({color:0x0a0a0d,toneMapped:false,side:THREE.DoubleSide});
+const lidU=new THREE.Mesh(new THREE.SphereGeometry(2.09,64,24,0,Math.PI*2,0,Math.PI*0.5),lidM), lidL=new THREE.Mesh(new THREE.SphereGeometry(2.09,64,24,0,Math.PI*2,Math.PI*0.5,Math.PI*0.5),lidM);
+lidU.rotation.x=-Math.PI/2; lidL.rotation.x=Math.PI/2; core.add(lidU); core.add(lidL); core.userData.lids=[lidU,lidL];   // open: both caps sit at the back; a blink swings them forward
+// rings: three tilted orbits, counter-rotating at three rates, one travelling light on each — the thing everything orbits
+const rings=new THREE.Group(); core.add(rings); core.userData.rings=[];
+[[3.1,0.9,0.0,0.55],[3.9,-0.6,0.5,-0.38],[4.8,0.35,-0.9,0.27]].forEach(([r,tx,tz,w],i)=>{ const piv=new THREE.Group(); piv.rotation.set(tx,0,tz); rings.add(piv);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(r,0.016,6,200),new THREE.MeshBasicMaterial({color:0xd6f84a,transparent:true,opacity:0.22,toneMapped:false})); piv.add(ring);
+  const node=contact(0xd6f84a,0.9); node.material.opacity=0.9; node.material.color.set(0xd6f84a); piv.add(node);
+  const glow=contact(0xd6f84a,2.6); glow.material.opacity=0.35; piv.add(glow);
+  core.userData.rings.push({piv,ring,node,glow,r,w}); });
+const corona0=contact(0xd6f84a,9.5); corona0.position.z=-0.6; corona0.material.opacity=0.22; core.add(corona0); core.userData.corona=corona0;
+// gaze behaviour state
+const GZ={yaw:0,pitch:0,ty:0,tp:0,next:1.2,dil:1.0};
+// The physical Blender eye is now attached to the existing gaze assembly.
+// The procedural eye remains a visible fallback until its GLB successfully loads.
+gltf.load('assets/eye.glb',res=>{
+  const model=res.scene; let physical=false;
+  model.traverse(child=>{ if(child.isMesh && child.userData.zolaPBR){
+    physical=true; retainPhysicalMaterial(child);
+    if(child.name==='pupil'){
+      core.userData.physicalPupil=child; child.userData.baseScale=child.scale.clone();
+      child.material=child.material.clone(); child.material.envMapIntensity=0; child.material.metalness=0;
+      child.material.roughness=0.85; child.material.clearcoat=0;
+      if('specularIntensity' in child.material) child.material.specularIntensity=0;
+    }
+    if(child.name==='cornea'){ child.material.opacity=0.028; child.material.clearcoat=0.9; child.material.depthWrite=false; }
+    if(child.name==='iris_surface'){
+      child.material.emissive=new THREE.Color(0x97b833); child.material.emissiveIntensity=0.28;
+      child.material.envMapIntensity=0.08; child.material.roughness=0.60; child.material.clearcoat=0.18;
+      child.material.emissiveMap=child.material.map;
+    }
+  }});
+  if(!physical) return;
+  gaze.add(model); eyeball.visible=false; core.userData.physicalEye=model;
+  // Keep the existing god-ray source as a small wet catchlight, rather than a white pupil.
+  sun.scale.setScalar(0.16); sun.position.set(-0.43,0.60,1.94);
+  if(STILL && window.__ready) frame();
+},undefined,error=>console.warn('Physical eye unavailable; retaining procedural eye.',error));
+
+/* ---------------- camera: a mind-map — focus point + orbit offset ---------------- */
+const F=new THREE.Vector3(0,0,0), Ft=new THREE.Vector3(0,0,0);
+let th=0.6, ph=1.14, dist=STILL?60:16, tht=th, pht=ph, distt=60;   // boot: the camera pulls back from the eye to the resting frame
+const lookAt=new THREE.Vector3(), rightV=new THREE.Vector3(), upV=new THREE.Vector3();
+// pointer parallax: the overview leans a few degrees toward the pointer. Mechanical, damped, overview only.
+let mx=0,my=0,pmx=0,pmy=0, lastMove=0; addEventListener('pointermove',e=>{ mx=e.clientX/innerWidth*2-1; my=e.clientY/innerHeight*2-1; lastMove=performance.now(); ATT.on=-1; });
+const ATT={on:-1,next:4,gx:0,gy:0};   // idle attention: which planet the eye is glancing at
+function place(){ camera.position.set(F.x+dist*Math.sin(ph)*Math.cos(th), F.y+dist*Math.cos(ph), F.z+dist*Math.sin(ph)*Math.sin(th));
+  camera.lookAt(F); camera.updateMatrix(); rightV.setFromMatrixColumn(camera.matrix,0); upV.setFromMatrixColumn(camera.matrix,1);
+  if(cur<0&&!dragging){ camera.position.addScaledVector(rightV,pmx*dist*0.025).addScaledVector(upV,-pmy*dist*0.018); }
+  // composition: inside a region the page owns the left two-thirds, so the landmark is aimed to land in the right third.
+  const k = cur<0 ? 0 : dist*0.34;
+  lookAt.copy(F).addScaledVector(rightV,-k); camera.lookAt(lookAt); }
+let cur=-1; // focused region, -1 = overview
+let divePulse=0;   // bloom swells for a beat when the camera dives — the door opening
+function goto(ci,instant=false){ document.body.classList.toggle('has-region',ci>=0); if(ci!==cur&&!instant) divePulse=1; cur=ci;
+  if(ci<0){ Ft.set(0,0,0); distt=Math.max(60,32/(Math.tan(28*Math.PI/180)*(innerWidth/innerHeight))); pht=1.14; } else { Ft.copy(REG[ci].c); distt={intel:17,finance:15,career:14}[REG[ci].id]||13; pht={intel:0.95,finance:1.15}[REG[ci].id]||1.36; tht=REG[ci].ang+Math.PI*0.5; }
+  if(instant){ F.copy(Ft); dist=distt; ph=pht; th=tht; }
+  renderIndex(); renderExhibit(ci); }
+// drag to orbit, wheel to dolly
+let dragging=false, lx=0, ly=0, downX=0, downY=0, dragTravel=0, interacted=false;
+canvas.addEventListener('pointerdown',e=>{ dragging=true; lx=downX=e.clientX; ly=downY=e.clientY; dragTravel=0; canvas.setPointerCapture(e.pointerId); canvas.classList.add('drag'); stopTour(); });
+addEventListener('pointerup',()=>{ dragging=false; canvas.classList.remove('drag'); });
+addEventListener('pointermove',e=>{ if(!dragging) return; dragTravel=Math.max(dragTravel,Math.hypot(e.clientX-downX,e.clientY-downY)); tht+=(e.clientX-lx)*0.005; pht=Math.min(2.6,Math.max(0.35,pht+(e.clientY-ly)*0.004)); lx=e.clientX; ly=e.clientY; });
+addEventListener('wheel',e=>{ if(document.getElementById('page').classList.contains('on')||e.target.closest('#page')) return; distt=Math.min(140,Math.max(9,distt*(1+e.deltaY*0.0012))); stopTour(); },{passive:true});
+const touches=new Map(); let pinch=0;
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')touches.set(e.pointerId,{x:e.clientX,y:e.clientY});});
+canvas.addEventListener('pointermove',e=>{if(!touches.has(e.pointerId))return;touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const [a,b]=[...touches.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch)distt=Math.max(9,Math.min(140,distt*pinch/d));pinch=d;dragging=false;dragTravel=100;}});
+function endPointer(e){touches.delete(e.pointerId);pinch=0;dragging=false;canvas.classList.remove('drag');}
+addEventListener('pointerup',endPointer);addEventListener('pointercancel',endPointer);
+// click a landmark → fly there (raycast against landmarks)
+const ray=new THREE.Raycaster(), ndc=new THREE.Vector2(); let downAt=0;
+canvas.addEventListener('pointerdown',e=>{ downAt=performance.now(); });
+// hover: the landmark under the pointer lifts a little and its name brightens; the cursor says it is a door
+let hot=-1, hoverAt=0;
+canvas.addEventListener('pointermove',e=>{ if(dragging||performance.now()-hoverAt<80) return; hoverAt=performance.now();
+  ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight*2-1)); ray.setFromCamera(ndc,camera); ray.params.Line.threshold=0.5; ray.params.Points.threshold=0.4;
+  const hits=ray.intersectObjects(landmarks,true); let ci=-1; if(hits.length){ let o=hits[0].object; while(o&&o.userData.ci===undefined) o=o.parent; if(o) ci=o.userData.ci; }
+  if(ci!==hot){ hot=ci; canvas.style.cursor=hot>=0?'pointer':''; lmEls.forEach((el,i)=>el.classList.toggle('hot',i===hot)); } });
+canvas.addEventListener('click',e=>{ if(performance.now()-downAt>350||dragTravel>5) return; // a drag, not a click
+  ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight*2-1)); ray.setFromCamera(ndc,camera); ray.params.Line.threshold=0.5;
+  const hits=ray.intersectObjects(landmarks,true); if(hits.length){ let o=hits[0].object; while(o&&o.userData.ci===undefined) o=o.parent; if(o) goto(o.userData.ci); return; }
+  const c=ray.intersectObject(core,true); if(c.length) goto(-1); });
+// keyboard flight: W/S or +/- dolly, A/D orbit, Q/E tilt (held keys repeat, so each press is a small mechanical step)
+addEventListener('keydown',e=>{ if(e.target&&/INPUT|TEXTAREA|BUTTON|SELECT/.test(e.target.tagName)) return; const k=e.key.toLowerCase();
+  if(k==='w'||k==='+'||k==='='){ distt=Math.max(6,distt*0.92); stopTour(); return; } if(k==='s'||k==='-'||k==='_'){ distt=Math.min(140,distt*1.09); stopTour(); return; }
+  if(k==='a'){ tht-=0.08; stopTour(); return; } if(k==='d'){ tht+=0.08; stopTour(); return; }
+  if(k==='q'){ pht=Math.max(0.35,pht-0.06); stopTour(); return; } if(k==='e'){ pht=Math.min(2.6,pht+0.06); stopTour(); return; }
+  if(e.key>='1'&&e.key<='5') goto(+e.key-1); else if(e.key==='0') goto(-1); else if(e.key==='Escape') goto(-1);
+  else if(e.key==='ArrowRight') goto(cur<0?0:(cur+1)%5); else if(e.key==='ArrowLeft') goto(cur<0?4:(cur+4)%5); });
+// double-click (or double-tap) on the void → home. On a landmark it still just enters that region.
+canvas.addEventListener('dblclick',e=>{ ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight*2-1)); ray.setFromCamera(ndc,camera);
+  if(ray.intersectObjects(landmarks,true).length) return; stopTour(); goto(-1); });
+
+/* ---------------- tour (first load): overview → each region → overview ---------------- */
+let tourT=-1; const TOUR_SEQ=[-1,0,1,2,3,4,-1], TOUR_STEP=3.8;
+function startTour(){ tourT=0; } function stopTour(){ if(tourT>=0){ tourT=-1; document.getElementById('tourBtn').textContent='Replay tour'; } }
+document.getElementById('tourBtn').onclick=()=>{ startTour(); document.getElementById('tourBtn').textContent='Touring…'; };
+
+/* ---------------- post ---------------- */
+// Only emitters (>1.0 luminance) bloom. Smoothing keeps the knee soft so a core does not pop in and out of bloom as it breathes.
+// Depth of field is keyed to the focus point every frame, so whatever you are looking at is sharp and the far ring softens.
+const composer=new EffectComposer(renderer,{frameBufferType:THREE.HalfFloatType}); composer.addPass(new RenderPass(scene,camera));
+const BLOOM0=0.65, bloom=new BloomEffect({luminanceThreshold:1.0,luminanceSmoothing:0.25,intensity:BLOOM0,mipmapBlur:true,radius:0.65});
+const dof=new DepthOfFieldEffect(camera,{focusDistance:0.0,focalLength:0.08,bokehScale:1.0});   // gentle: the far stars soften, they do not become discs
+const vignette=new VignetteEffect({darkness:0.46,offset:0.28});
+// lens: a hair of chromatic aberration at the frame edges and film grain under 5% — the two cues that say "camera", not "canvas"
+const chroma=new ChromaticAberrationEffect({offset:new THREE.Vector2(0.0009,0.0005),radialModulation:true,modulationOffset:0.35});
+const grain=new NoiseEffect({premultiply:true}); grain.blendMode.opacity.value=0.045;
+const godrays=new GodRaysEffect(camera,core.userData.sun,{density:0.92,decay:0.94,weight:0.30,exposure:0.26,samples:48,clampMax:1.0,blur:true}); godrays.blendMode.opacity.value=STILL?1:0;
+const raysPass=new EffectPass(camera,godrays); raysPass.enabled=false; composer.addPass(raysPass);
+const depthPass=new EffectPass(camera,dof); depthPass.enabled=false; composer.addPass(depthPass);
+composer.addPass(new EffectPass(camera,bloom,vignette,grain,new SMAAEffect()));
+let sized=false; function resize(){ const w=innerWidth,h=innerHeight; if(!w||!h){sized=false;return;} sized=true; renderer.setSize(w,h); composer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); if(ribbon) ribbon.material.resolution.set(w,h); }
+function setQuality(mode){ quality.mode=mode; quality.ratio=Math.min(devicePixelRatio,mode==='cinematic'?2:mode==='light'?1:(innerWidth<700?1.25:1.5)); raysPass.enabled=depthPass.enabled=mode==='cinematic'; renderer.setPixelRatio(quality.ratio); resize(); }
+document.getElementById('quality').addEventListener('change',e=>setQuality(e.target.value));
+document.getElementById('quality').value=['auto','cinematic','light'].includes(quality.mode)?quality.mode:'auto';
+addEventListener('resize',resize); setQuality(document.getElementById('quality').value);
+
+/* ---------------- UI ---------------- */
+const $=s=>document.querySelector(s);
+function renderIndex(){ $('#idx').innerHTML=REG.map((g,i)=>`<button class="ix" aria-label="${g.name}" title="${g.name}" style="--hue:${g.css}" aria-current="${cur===i}" onclick="window.__goto(${i})"><i></i><span>${g.name}</span></button>`).join('')+
+  `<button class="ix" aria-current="${cur===-1}" onclick="window.__goto(-1)" title="Overview"><span>⌂</span></button>`;
+  $('#crumb').innerHTML='the world <span>/ '+(cur<0?'overview':REG[cur].name.toLowerCase()+' · '+REG[cur].tag)+'</span>';
+  $('#strip').classList.toggle('hide',cur>=0); $('#tourBtn').classList.toggle('hide',cur>=0); }
+window.__goto=i=>{ stopTour(); goto(i); };
+
+// inside pages — demo content only. One hero numeral, one instrument, one designer's note. Everything
+// carries data-at: the page has a clock (0→1 over ~3 s) and elements light as it passes them.
+let QI=-1, AI=true, chainT=0, playing=false, pageT=0;
+const at=(k,html)=>html.replace(/^<(\w+)/,`<$1 data-at="${k}"`);
+// ── the Verdict contract, drawn once ─────────────────────────────────────────
+// A node's output is a NUMBER with a MOVE attached: metric · value · the rule it is judged
+// against · a move with an amount and a date · what would change it. Four states: ACT, DATA
+// (an input is missing, so the system asks), WAIT, SETTLED. Every page below renders its
+// outputs through this one card, so a visitor learns the shape once and reads it five times.
+const inr=n=>(n<0?'−':'')+'₹'+Math.abs(Math.round(n)).toLocaleString('en-IN');
+const fmtVal=(v,u)=>v==null?'—':(u==='share'?(v*100).toFixed(1)+'%':u==='count'?(+v).toFixed(2):u==='points'?v+' pts':u==='INR'?inr(v):String(v));
+function verdictCard(v,k){ const m=v.move||{}; const st=(v.verdict||'wait').toLowerCase();
+  const num=m.amount?`<div class="vn">${inr(m.amount)}<small>${m.by?'by '+m.by:'move'}</small></div>`:`<div class="vn">${fmtVal(v.value,v.unit)}<small>${v.threshold!=null?'limit '+fmtVal(v.threshold,v.unit):'measured'}</small></div>`;
+  const rule=v.threshold!=null&&m.amount?`<b>${fmtVal(v.value,v.unit)}</b> against a limit of <b>${fmtVal(v.threshold,v.unit)}</b> · ${v.rule}`:v.rule;
+  const d=v.detail||{}; const extra=d.eff_n_after?`effective classes <i>${d.eff_n_now} → ${d.eff_n_after}</i> · class cap <i>${Math.round(d.class_cap*100)}%</i> · shock downside <i>${inr(d.downside)}</i> · ranked #${d.rank} by effect on structure, not by return`:(v.changes_if?`changes if · <i>${v.changes_if}</i>`:'');
+  return at(k,`<div class="vc"><div class="vv ${st}">${v.verdict}</div><div><div class="vm">${m.what||v.metric}</div><div class="vr">${rule}</div></div>${num}${extra?`<div class="vx">${extra}</div>`:''}</div>`); }
+function verdictFeed(list,k0=.2,step=.09){ return `<div class="vfeed">${list.map((v,i)=>verdictCard(v,k0+i*step)).join('')}</div>`; }
+// the Finance feed is GENERATED by engine/zola_moves.py from engine/demo-book.json (synthetic
+// numbers) into assets/demo-moves.json. Nothing on the page is typed; regenerate and it changes.
+const FEEDS={}; const FEED_SRC={finance:'demo-moves',career:'demo-ladder',creative:'demo-sessions',intel:'demo-sweeps'};
+Object.entries(FEED_SRC).forEach(([id,f])=>{ fetch('./assets/'+f+'.json').then(r=>r.json()).then(d=>{ FEEDS[id]=d; if(cur>=0&&REG[cur].id===id){ renderExhibit(cur); paintPage(pageT); } }).catch(()=>{}); });
+const loading=(f)=>`<div class="hero"><span class="hn">…</span><span class="hl">loading the verdict feed<br>assets/${f}.json</span></div>`;
+const st=(n,tt,dd)=>`<div class="st"><div class="n">${n}</div><div class="tt">${tt}</div><div class="dd">${dd}</div></div>`;
+const vfoot=(txt)=>`<div class="vfoot">${txt}</div>`;
+const dmy=(iso)=>{ const d=new Date(iso+'T00:00:00'); return d.getDate()+' '+d.toLocaleString('en-GB',{month:'short'}).toUpperCase(); };
+const EX={
+  // Every page opens on ONE exhibit drawn from the feed, then the reasoning under it. The exhibit is the number; the text explains it.
+  finance:()=>{ const f=FEEDS.finance; if(!f) return loading('demo-moves');
+    const acts=f.verdicts.filter(v=>v.verdict==='ACT'), data=f.verdicts.filter(v=>v.verdict==='DATA'); const trim=acts.find(v=>v.id.startsWith('fin.cap.'));
+    const share=trim?+trim.value:0, cap=trim?+trim.threshold:f.rules.holding_cap, SC=0.6;           // the gauge runs 0 → 60% of the book
+    const L=Math.PI*170, ks=Math.min(1,share/SC), kc=Math.min(1,cap/SC);
+    const pt=(k,r)=>[300-r*Math.cos(Math.PI*k), 210-r*Math.sin(Math.PI*k)];
+    const [nx,ny]=pt(ks,150), [cx1,cy1]=pt(kc,154), [cx2,cy2]=pt(kc,186);
+    const marks=Array.from({length:7},(_,i)=>{ const k=i/6; const [x1,y1]=pt(k,172),[x2,y2]=pt(k,180); const [lx,ly]=pt(k,196); return `<path d="M${x1} ${y1}L${x2} ${y2}" class="mk"/><text x="${lx}" y="${ly}" class="xl" text-anchor="middle">${Math.round(k*SC*100)}%</text>`; }).join('');
+    return `<div class="ex"><svg viewBox="0 0 600 236" role="img" aria-label="holding share against its cap">
+      <path d="M130 210 A170 170 0 0 1 470 210" class="arcbg" stroke-width="14"/>${marks}
+      ${at(.12,`<path d="M130 210 A170 170 0 0 1 470 210" class="arc" stroke-width="14" style="--len:${L.toFixed(1)};--off:${(L*(1-ks)).toFixed(1)}"/>`)}
+      ${ks>kc?at(.42,`<path d="M130 210 A170 170 0 0 1 470 210" class="over" stroke-width="14" style="stroke-dasharray:${(L*(ks-kc)).toFixed(1)} ${(L*2).toFixed(1)};stroke-dashoffset:${(-L*kc).toFixed(1)}"/>`):''}
+      ${at(.3,`<path d="M${cx1} ${cy1}L${cx2} ${cy2}" class="cap"/><text x="${cx2}" y="${cy2-6}" class="xl cap-l" text-anchor="middle">cap ${Math.round(cap*100)}%</text>`)}
+      ${at(.5,`<g class="needle"><line x1="300" y1="210" x2="${nx}" y2="${ny}"/><circle cx="300" cy="210" r="4"/></g>`)}
+      <text x="300" y="150" class="num" text-anchor="middle" data-roll="${trim?trim.move.amount:acts.length}" ${trim?'data-prefix="₹"':''}>0</text>
+      <text x="300" y="176" class="xl" text-anchor="middle">${trim?'to trim tomorrow · one holding over its cap':'moves due'}</text>
+      <text x="300" y="196" class="xl dim" text-anchor="middle">${trim?('share '+(share*100).toFixed(1)+'% · cap '+Math.round(cap*100)+'% · '+f.eff_n+' effective holdings'):(acts.length+' ACT · '+data.length+' DATA')}</text></svg></div>
+    <div class="below"><div class="chain chain3">${at(.55,st('01','Measure',f.verdicts[0].basis.n+' holdings · '+inr(f.total)+' · level A'))}
+      ${at(.6,st('02','Judge','against the owner’s own caps · holding '+Math.round(f.rules.holding_cap*100)+'% · '+Math.round(f.rules.per_move_risk_pct*100)+'% risk per move'))}
+      ${at(.65,st('03','Move',acts.filter(v=>v.move).length+' sized moves · '+data.length+' input'+(data.length===1?'':'s')+' requested'))}</div>
+    ${verdictFeed(f.verdicts,.68,.05)}
+    ${at(.95,vfoot('generated '+f.asof+' by engine/zola_moves.py from engine/demo-book.json · synthetic book · classes named, instruments never · no return is forecast'))}
+    ${at(.98,'<div class="aitext"><b>How it decides</b> — the book is measured, judged against rules the owner wrote, and each breach becomes a move with an amount and a date. When an input is missing the system asks for it instead of pretending. Edit the book and the needle moves; nothing here is typed.</div>')}</div>`; },
+  career:()=>{ const f=FEEDS.career; if(!f) return loading('demo-ladder');
+    const rows=f.rows.slice().reverse(), acts=f.verdicts.filter(v=>v.verdict==='ACT').length, data=f.verdicts.filter(v=>v.verdict==='DATA').length;
+    const curI=rows.findIndex(r=>r.status==='current'), nextI=Math.max(0,curI-1);
+    const rungs=rows.map((r,i)=>{ const y=34+i*54, cls=r.status==='current'?'cur':(r.status==='done'?'done':'next'); const k=.1+(rows.length-1-i)*.1;
+      const chk=i===nextI?f.checklist.map((c,j)=>at(.62+j*.07,`<rect x="${372+j*22}" y="${y-7}" width="14" height="14" rx="2" class="cb ${c.done?'on':''}"/>`)).join(''):'';
+      return at(k,`<g class="rung ${cls}"><line x1="58" y1="${y}" x2="560" y2="${y}"/><text x="18" y="${y+4}" class="xl">${r.level}</text><text x="70" y="${y-8}" class="nm">${r.name}</text><text x="70" y="${y+14}" class="xl dim">${r.status}${r.lit_on&&r.status!=='current'?' · '+r.lit_on:''}</text>${chk}</g>`); }).join('');
+    const ny=34+nextI*54;
+    return `<div class="ex"><svg viewBox="0 0 600 ${34+rows.length*54}" role="img" aria-label="the ladder">
+      <line x1="58" y1="20" x2="58" y2="${20+rows.length*54}" class="rail"/><line x1="560" y1="20" x2="560" y2="${20+rows.length*54}" class="rail"/>${rungs}
+      <text x="560" y="${ny-30}" class="num sm" text-anchor="end" data-roll="${f.left}">0</text><text x="560" y="${ny+30}" class="xl" text-anchor="end">conditions left before this rung lights</text></svg></div>
+    <div class="below"><div class="chain chain3">${at(.5,st('01','Measure',f.checklist.length+' conditions on the next rung · '+f.checklist.filter(c=>c.done).length+' ticked · level '+f.verdicts[0].basis.level+' (dated, self-reported)'))}
+      ${at(.55,st('02','Judge','a rung lights only when every condition is ticked · no partial credit'))}
+      ${at(.6,st('03','Move',acts+' move with a date · '+data+' input the system cannot measure itself'))}</div>
+    <div style="margin-top:12px">${f.checklist.map((c,i)=>at(.62+i*.07,`<div class="chk ${c.done?'done':''}"><i></i>${c.text}${c.measurable===false?' <span style="color:var(--t3)">· not measurable from inside</span>':''}</div>`)).join('')}</div>
+    ${verdictFeed(f.verdicts,.82,.06)}
+    ${at(.93,vfoot('generated '+f.asof+' by engine/zola_ladder.py from engine/demo-ladder.json · synthetic ladder · a rung is a state, not a score'))}
+    ${at(.95,'<div class="aitext"><b>How it works</b> — the next level lists what unlocks it. Tick everything and the rung lights. No mystery, just a build target.</div>')}</div>`; },
+  creative:()=>{ const f=FEEDS.creative; if(!f) return loading('demo-sessions');
+    const g=f.days.map((d,i)=>`<i data-at="${(.05+i/f.days.length*.6).toFixed(2)}" class="${d.made?'made':(d.planned?'half':'')}"></i>`).join('');
+    const gap=f.planned-f.made, rate=Math.round(f.rate*100), floor=Math.round(f.floor*100);
+    return `<div class="ex"><div class="exrow"><div class="grid7 big">${g}</div>
+      <div class="side"><div class="num" data-roll="${f.made}" data-suffix="/${f.planned}">0/${f.planned}</div><div class="xl">sessions made against planned · six weeks</div>
+        <svg viewBox="0 0 220 26" class="bar" aria-label="rate against the floor"><rect x="0" y="10" width="220" height="6" class="arcbg"/>${at(.66,`<rect x="0" y="10" width="${(rate*2.2).toFixed(1)}" height="6" class="fill"/>`)}${at(.7,`<line x1="${(floor*2.2).toFixed(1)}" y1="4" x2="${(floor*2.2).toFixed(1)}" y2="22" class="cap"/><text x="${(floor*2.2).toFixed(1)}" y="2" class="xl" text-anchor="middle" dominant-baseline="hanging" dy="-14">floor ${floor}%</text>`)}</svg>
+        <div class="xl dim">${rate}% made · the line is ${floor}%</div></div></div></div>
+    <div class="below"><div class="chain chain3">${at(.72,st('01','Measure',f.days.length+' days · '+f.planned+' planned · '+f.made+' made · level '+f.verdicts[0].basis.level+' (the log is the source)'))}
+      ${at(.76,st('02','Judge','rate '+rate+'% against the '+floor+'% line · six weeks, not one bad day'))}
+      ${at(.8,st('03','Move','next month’s plan is set from what was made, not what was hoped'))}</div>
+    <div class="rows" style="margin-top:12px">${at(.84,'<div class="row"><span>Planned</span><span class="num-i">'+f.planned+'</span></div>')}${at(.86,'<div class="row"><span>Made</span><span class="num-i">'+f.made+'</span></div>')}${at(.88,'<div class="row"><span>The gap</span><span class="num-i">'+gap+' — next month’s plan is built from it</span></div>')}</div>
+    ${verdictFeed(f.verdicts,.9,.04)}
+    ${at(.95,vfoot('generated '+f.asof+' by engine/zola_sessions.py from engine/demo-sessions.json · synthetic log · the grid is drawn from the log, never typed'))}
+    ${at(.97,'<div class="aitext"><b>How to read it</b> — filled means made. Empty means not. It does not cheer and it does not nag; the plan for next month is the gap, nothing else.</div>')}</div>`; },
+  intel:()=>{ const f=FEEDS.intel; if(!f) return loading('demo-sweeps');
+    const X=d=>(d/f.days*100).toFixed(1)+'%';
+    const polar=(day,spread,R=108)=>{ const a=day/f.days*Math.PI*2-Math.PI/2, r=Math.min(R,Math.max(18,(Math.abs(spread)-0.3)/0.5*R)); return [130+r*Math.cos(a),130+r*Math.sin(a)]; };
+    const pings=f.signals.map((sg,i)=>{ const [x,y]=polar(+sg.day,+sg.spread); return at(.3+i*.2,`<g class="ping"><circle cx="${x}" cy="${y}" r="3.2"/><circle cx="${x}" cy="${y}" r="9" class="halo"/></g>`); }).join('');
+    const watches=f.watches.map((w,i)=>{ const [x,y]=polar(+w.day,+w.spread); return at(.25+i*.1,`<circle cx="${x}" cy="${y}" r="2" class="watch"/>`); }).join('');
+    const tlp=f.signals.map((sg,i)=>at(.3+i*.2,`<span class="pg ${['','b','c'][i]||'c'}" style="left:${X(sg.day)}" data-l="${sg.source}"></span>`)).join('');
+    const sils=f.gaps.map((gp,i)=>at(.4+i*.2,`<span class="sil" style="left:${X(gp.from_day+0.3)};width:${X(gp.days-0.6)}" data-l="silence · ${gp.days} d"></span>`)).join('');
+    const tlw=f.watches.map(w=>`<span class="pg" style="left:${X(w.day)};height:18px;opacity:.45"></span>`).join('');
+    const end=new Date(f.start+'T00:00:00'); end.setDate(end.getDate()+f.days);
+    return `<div class="ex"><div class="exrow"><svg viewBox="0 0 260 260" class="scope" role="img" aria-label="the month as a radar scope">
+      <circle cx="130" cy="130" r="108" class="ring"/><circle cx="130" cy="130" r="72" class="ring"/><circle cx="130" cy="130" r="36" class="ring"/>
+      <line x1="130" y1="22" x2="130" y2="238" class="ring"/><line x1="22" y1="130" x2="238" y2="130" class="ring"/>
+      <path d="M130 130 L130 22 A108 108 0 0 1 ${(130+108*Math.sin(0.9)).toFixed(1)} ${(130-108*Math.cos(0.9)).toFixed(1)} Z" class="sweep"/>
+      ${watches}${pings}
+      <text x="130" y="12" class="xl" text-anchor="middle">${dmy(f.start)}</text><text x="130" y="256" class="xl" text-anchor="middle">day ${Math.round(f.days/2)}</text></svg>
+      <div class="side"><div class="num" data-roll="${f.signals.length}">0</div><div class="xl">signals in ${f.days} days · ${f.sweeps} sweeps · ${f.silent} silences</div>
+        <div class="k" style="margin-top:14px">The month · pings are two pixels, silence has a width</div>
+        <div class="tl">${Array.from({length:7},(_,i)=>`<span class="d" style="left:${(i*5/f.days*100).toFixed(1)}%"></span>`).join('')}${tlw}${tlp}${sils}<span class="ax" style="left:0">${dmy(f.start)}</span><span class="ax" style="right:0">${end.getDate()+' '+end.toLocaleString('en-GB',{month:'short'}).toUpperCase()}</span></div></div></div></div>
+    <div class="below"><div class="chain chain3">${at(.6,st('01','Measure',f.sweeps+' sweeps · a spread against a control group · level '+f.verdicts[0].basis.level+' (public sources, logged)'))}
+      ${at(.64,st('02','Judge','a crossing below '+f.threshold+' with a named source is a signal · without one it is a watch'))}
+      ${at(.68,st('03','Move',f.signals.length+' signals, '+f.signals.length+' moves · '+f.watches.length+' watches · '+f.silent+' silences, logged as results'))}</div>
+    <div class="rows" style="margin-top:12px">${at(.8,'<div class="row"><span>Threshold · spread</span><span class="num-i">'+f.threshold+' vs control</span></div>')}${at(.84,'<div class="row"><span>Sweeps run</span><span class="num-i">'+f.sweeps+' · all silent but '+(f.signals.length+f.watches.length)+'</span></div>')}</div>
+    ${verdictFeed(f.verdicts,.86,.02)}
+    ${at(.96,vfoot('generated '+f.asof+' by engine/zola_sweeps.py from engine/demo-sweeps.json · synthetic log · the threshold is the owner’s, stated in the file'))}
+    ${at(.97,'<div class="aitext"><b>Why so short</b> — three signals in a month is correct. A threshold decides what counts, and silence is drawn as width so you can see it was earned.</div>')}</div>`; },
+  engine:()=>{ const Q=QUESTIONS[0];
+    const stations=[['you','asks',Q.q],['the lens','classifies',Q.cls],['memory','recalls',Object.keys(Q.aff).map(k=>k+' '+Math.round(Q.aff[k]*100)+'%').join(' · ')],['rules','judge',Q.rules.map(r=>r[0]+' — '+r[1]).join('\n')],['verdict','returns',Q.v]];
+    const W=600, x0=52, dx=(W-104)/4; const wrap=(txt,n=19,max=3)=>{ const out=[]; String(txt).split('\n').forEach(line=>{ let cur=''; line.split(' ').forEach(w=>{ if((cur+' '+w).trim().length>n){ if(cur) out.push(cur); cur=w; } else cur=(cur+' '+w).trim(); }); if(cur) out.push(cur); }); return out.length>max?out.slice(0,max-1).concat([out[max-1].slice(0,n-1)+'…']):out; };
+    const org=`<div class="ex"><svg viewBox="0 0 600 300" role="img" aria-label="how the system is organised: a question travels through five stations and comes back as a verdict">
+      <line x1="${x0}" y1="60" x2="${x0+dx*4}" y2="60" class="rail"/>
+      ${stations.map(([n,verb,out],i)=>{ const x=x0+dx*i; const lines=wrap(out); return at(.08+i*.14,`<g class="stn ${i===4?'hue':''}"><circle cx="${x}" cy="60" r="${i===4?9:7}" class="ring ${i===4?'hue':''}"/><text x="${x}" y="30" class="xl" text-anchor="middle">${n}</text><text x="${x}" y="44" class="xl dim" text-anchor="middle">${verb}</text>
+        <line x1="${x}" y1="69" x2="${x}" y2="96" class="mk"/>${lines.map((l,j)=>`<text x="${x}" y="${112+j*14}" class="xl dim out" text-anchor="middle">${l}</text>`).join('')}</g>`); }).join('')}
+      ${REDUCED?'':`<circle cy="60" r="4" class="dot run"><animate attributeName="cx" values="${x0};${x0+dx*4};${x0+dx*4};${x0}" keyTimes="0;0.55;0.7;1" dur="8s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1"/></circle>`}
+      ${at(.78,`<rect x="${x0-24}" y="170" width="${dx*4+48}" height="54" rx="8" class="vbox"/><text x="${x0-10}" y="190" class="xl">the verdict · ${Q.cls}</text><text x="${x0-10}" y="210" class="vtext">${Q.v}</text>`)}
+      ${at(.9,wrap('agentic shell: '+Q.ai.replace('The shell would add: ',''),78,2).map((l,j)=>`<text x="${x0-10}" y="${248+j*14}" class="xl dim">${l}</text>`).join(''))}
+      ${at(.95,`<text x="${x0-10}" y="286" class="xl dim">built with · Claude Code · skills · memory files · hooks · launchd · git</text>`)}</svg></div>`;
+    return org+`<div class="below">
+    <div class="hero"><span class="hn" data-roll="17">0</span><span class="hl">engine modules · one server · zero cloud<br>everything below runs on one laptop</span></div>
+    <div class="k">The stack · bottom up</div>
+    <div class="stack">${[['Data','flat JSON, local only','*.local.json · never committed'],['Engine','17 Python modules, one job each','rules · scheduler · learning loop · verification'],['Server','zola-server.py','localhost:3737 · serves + computes'],['Shell','one live surface','this orbit, five pages, one memory'],['Agent','reads everything, proposes anything','decides nothing']]
+      .map(([n,t,d],i)=>at(.6+i*.05,`<div class="layer"><span class="ln">${n}</span><span class="lt">${t}</span><span class="ld">${d}</span></div>`)).join('')}</div>
+    <div class="facts">${at(.8,'<div class="fact"><b>$0</b>runtime cost</div>')}${at(.82,'<div class="fact"><b>0</b>telemetry</div>')}${at(.84,'<div class="fact"><b>1</b>machine</div>')}${at(.86,'<div class="fact"><b>allowlist</b>gitignore</div>')}</div>
+    <div class="k" style="margin-top:14px">Modules</div>
+    <div class="mods">${[['moves','Finance verdicts: trims and sized deploys'],['ladder','Career verdicts: a rung is a state'],['sessions','Creative verdicts: the grid is the log'],['sweeps','Intel verdicts: silence is counted'],['cron','tick scheduler, no daemon'],['learn','moves strengthen on outcomes'],['skills','and decay without them'],['capture','wins and losses, logged'],['pipeline','outreach outcomes → loop'],['verify','every number carries its error'],['survivorship','Wilson floor, not raw rate'],['signaling','control group before a story'],['toolkit','what the system can do, catalogued'],['screen','the shell’s eyes'],['astronomy','the sky you are looking at'],['itshock','one shock, one note'],['fin_confirm','a figure is confirmed or it is not']]
+      .map(([m,d],i)=>at(.86+i*.008,`<div class="mod"><code>${m}</code><span>${d}</span></div>`)).join('')}</div>
+    <div class="k" style="margin-top:16px">Illustrative questions · fixed examples</div><div class="qs" id="qs"></div>
+    <div class="chain" id="chain">${['Classify','Rules','Recall','Verdict'].map((t,i)=>`<div class="st"><div class="n">0${i+1}</div><div class="tt">${t}</div><div class="dd">—</div></div>`).join('')}</div>
+    <div class="v" id="v">Ask. Then watch where the light goes.</div><div class="why" id="why"></div>
+    <button class="sw" id="ai" role="switch" aria-checked="true">Agentic shell <i></i></button><div class="aitext" id="aitext"></div>
+    <div class="k" style="margin-top:16px">Scheduler · tick-based, no daemon</div><div class="ticks" id="ticks">${Array.from({length:12},(_,i)=>`<i data-at="${(i/12).toFixed(2)}" class="${[1,4,5,9].includes(i)?'on':''}"></i>`).join('')}</div>
+    ${at(.98,'<div class="aitext" style="margin-top:18px;border-top:1px solid var(--line);padding-top:12px"><b>Where it lives</b> — the backend is the <code style="font-family:var(--fm)">engine/</code> folder of this repository: seventeen Python modules and one server file, readable top to bottom. Every number on the four pages is the output of four of them.</div>')}</div>`; },
+};
+const HEAD={
+  finance:['Finance · the cockpit','Your holdings against the caps you wrote. A breach becomes a move with an amount and a date.'],
+  career:['Career · the ladder','The next level as a checklist. A rung lights only when every condition is ticked.'],
+  creative:['Creative · the studio','Sessions planned against sessions made, six weeks at a time. The gap sets next month’s plan.'],
+  intel:['Intel · the radar','Public sources swept on a schedule. A signal only when a spread crosses the threshold with a named source.'],
+  engine:['Engine · the engine room','How a question travels through the system and comes back as a verdict. The model proposes; the rules decide.'],
+};
+const NOTE={
+  finance:'<b>Designer’s note</b>Direction colours (up / down) appear only on money and dates. The hue of the region stays a 2px rule. If everything is coloured, nothing is.',
+  career:'<b>Designer’s note</b>A ladder is a state machine, so it is drawn as one: the rung that is lit is the only lit thing. Hope is not a state.',
+  creative:'<b>Designer’s note</b>The grid is the whole page. Forty-two squares carry more than a paragraph could, and they fill in at reading speed.',
+  intel:'<b>Designer’s note</b>Silence is the feature, so silence gets drawn. The gaps have a width and a label; the pings are two pixels wide.',
+  engine:'<b>Designer’s note</b>The backend is the exhibit here, so it is drawn as a stack and lit bottom-up: data before engine, engine before shell, the agent last. The switch at the end is the proof — turn it off and the verdict does not move.',
+};
+function safeOutput(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function processedExhibit(run){ const o=run.result;return `<div class="live-workflow"><div class="live-label">${run.input._example?'PROCESSED EXAMPLE INPUT':'YOUR PROCESSED INPUT'} · ${safeOutput(run.status)}</div><h2>${safeOutput(o.title)}</h2><div class="live-metrics">${o.metrics.map(m=>`<div><b>${safeOutput(m.value)}</b><span>${safeOutput(m.label)}</span></div>`).join('')}</div><div class="live-rule"><small>RULE APPLIED · ${safeOutput(o.verdict)}</small><p>${safeOutput(o.rule)}</p></div><p>${safeOutput(o.reason)}</p><h3>Next steps</h3><ol>${o.actions.map(a=>`<li>${safeOutput(a)}</li>`).join('')}</ol><div class="live-meta">Saved ${safeOutput(new Date(run.createdAt).toLocaleString())}<br>${safeOutput(o.rulesVersion)} · ${safeOutput(o.source)}</div>${run.outcome?`<div class="live-rule"><small>RECORDED OUTCOME</small><p>${safeOutput(run.outcome)}</p></div>`:''}</div>`;}
+function workspaceEngine(){const s=window.__workspaceState;return `<div class="live-workflow"><div class="live-label">LOCAL PROCESSING · CONNECTED</div><h2>A result you can trace.</h2><div class="live-metrics"><div><b>4</b><span>Working processors</span></div><div><b>${s.runs.length}</b><span>Saved runs</span></div><div><b>${s.runs.filter(r=>r.status==='done').length}</b><span>Completed outcomes</span></div></div><div class="live-rule"><small>ACTUAL PROCESSING PATH</small><p>Submitted input → validation → deterministic calculation → rule checks → saved result → recorded outcome.</p></div><h3>Available processors</h3><ul><li>Career: all conditions must be complete.</li><li>Creative: 42-day made / planned rate against your floor.</li><li>Allocation: holding shares against your chosen cap.</li><li>Intel: observed spread against your threshold, with a named source.</li></ul><div class="live-meta">Career and Creative use the existing Python engines. Allocation and Intel use explicit rules in workspace_server.py.<br>SQLite stores the input snapshot, processing result and outcome locally. No model produces these verdicts.</div><h3>Latest saved results</h3>${s.runs.length?s.runs.slice(0,4).map(r=>`<div class="live-rule"><small>${safeOutput(r.domain)} · ${safeOutput(r.result.verdict)} · ${safeOutput(r.status)}</small><p>${safeOutput(r.result.title)}</p></div>`).join(''):'<p>No saved runs yet. Open a workflow to create the first one.</p>'}</div>`;}
+addEventListener('zola-workspace-state',()=>{if(cur>=0)renderExhibit(cur);});
+function renderExhibit(ci){ const pg=$('#page'); $('#scrim').classList.toggle('on',ci>=0); if(ci<0){ pg.classList.remove('on'); return; } const g=REG[ci];
+  pg.style.setProperty('--hue',g.css); $('#pgK').innerHTML=`<b>0${ci+1} / 05</b><span>${g.name} · ${g.tag}</span>`; $('#pgT').textContent=HEAD[g.id][0]; $('#pgD').textContent=HEAD[g.id][1];
+  const liveRun=window.__workspaceState?.runs.find(r=>r.domain===g.id);const liveEngine=g.id==='engine'&&window.__workspaceState;$('#pgB').innerHTML=liveEngine?workspaceEngine():liveRun?processedExhibit(liveRun):EX[g.id]();if(liveRun)$('#pgD').textContent='Your saved input, the rule applied, and the resulting next steps. Open the workflow to edit and process again.';if(!liveRun&&!liveEngine&&g.id!=='engine')$('#pgD').textContent+=' Example data shown; use the workflow to process your own.'; $('#pgB').classList.toggle('dense',g.id==='engine'); $('#pgN').innerHTML=liveRun?'<b>Your saved result</b>Open the workflow to edit its inputs and process a new result. Earlier runs stay in History, alongside their recorded outcomes.':liveEngine?'<b>Local processing</b>Inputs are evaluated by explicit rules. Open decision history to inspect the saved runs and record what happened next.':NOTE[g.id]; pg.classList.add('on');
+  const pv=REG[(ci+4)%5], nx=REG[(ci+1)%5];
+  $('#pgNav').innerHTML=`<button onclick="window.__goto(${(ci+4)%5})" style="--nh:${pv.css}"><i></i>${pv.name}</button><button onclick="window.__goto(${(ci+1)%5})" style="--nh:${nx.css}"><i></i>${nx.name}</button><span class="sp"></span><button onclick="window.__goto(-1)">back to the world · 0</button>`;
+  const workButton=document.createElement('button');workButton.className='wk-button';workButton.textContent=g.id==='engine'?'Open decision history':'Use this workflow →';workButton.onclick=()=>window.__workspace?.open(g.id==='engine'?'history':g.id);$('#pgNav').prepend(workButton);
+  pageT=STILL?1:0; paintPage(pageT);
+  if(g.id==='engine'&&!liveEngine){ const qs=$('#qs'); QUESTIONS.forEach((Q,i)=>{ const b=document.createElement('button'); b.className='q'; b.textContent=Q.q; b.setAttribute('aria-pressed',String(i===QI)); b.onclick=()=>ask(i); qs.appendChild(b); });
+    $('#ai').setAttribute('aria-checked',String(AI)); $('#ai').onclick=()=>{ AI=!AI; $('#ai').setAttribute('aria-checked',String(AI)); renderVerdict(1); }; if(QI>=0) renderVerdict(chainT); } }
+// the page clock: stage reveals + rolling numerals (linear roll, as the brief says — no easing on data)
+function paintPage(k){ document.querySelectorAll('#page [data-at]').forEach(el=>el.classList.toggle('on',k>=+el.dataset.at)); document.querySelectorAll('#page .layer[data-at]').forEach(el=>el.classList.toggle('on',k>=+el.dataset.at));
+  document.querySelectorAll('#page [data-roll]').forEach(el=>{ const v=+el.dataset.roll, p=Math.min(1,k/0.55); el.textContent=(el.dataset.prefix||'')+Math.round(v*p).toLocaleString('en-IN')+(el.dataset.suffix||''); });
+  const tk=document.querySelectorAll('#ticks i'); tk.forEach((e,i)=>e.classList.toggle('now',i===Math.min(11,Math.floor(k*12)))); }
+const labelsEl=$('#labels'); const labelEls=new Map();
+function ask(i){ QI=i; document.querySelectorAll('.q').forEach((b,k)=>b.setAttribute('aria-pressed',String(k===i)));
+  ({w:W,path:PATH}=weightsFor(i)); paint(0); paintEdges(); buildRibbon();
+  labelsEl.querySelectorAll('.lbl').forEach(e=>e.remove()); labelEls.clear();
+  PATH.forEach(idx=>{ const n=nodes[idx]; const d=document.createElement('div'); d.className='lbl'; d.textContent=n.title||`${REG[n.ci].name} · memory ${String(idx).padStart(3,'0')}`; labelsEl.appendChild(d); labelEls.set(idx,d); });
+  chainT=0; playing=true; renderVerdict(STILL?1:0);
+  // the answer lives in another region → the camera goes to it, the engine panel stays open
+  const target=REG.findIndex(g=>g.id===QUESTIONS[i].region); Ft.copy(REG[target].c); distt=16; }
+function renderVerdict(k){ if(QI<0||!$('#chain')) return; const Q=QUESTIONS[QI], sts=[...document.querySelectorAll('.st')], stage=Math.floor(k*4.999);
+  sts.forEach((s,i)=>s.classList.toggle('on',i<stage));
+  sts[0].querySelector('.dd').textContent=stage>0?Q.cls:'—';
+  sts[1].querySelector('.dd').innerHTML=stage>1?Q.rules.map(([r,o])=>`${r} <span class="${o==='ok'?'ok':'no'}">${o==='ok'?'pass':o}</span>`).join('<br>'):'—';
+  sts[2].querySelector('.dd').textContent=stage>2?`${PATH.length} memories lit`:'—';
+  sts[3].querySelector('.dd').textContent=stage>3?'reasons attached':'—';
+  $('#v').textContent=stage>3?Q.v:(stage>0?'Thinking in the open…':'Pick a question.');
+  $('#why').innerHTML=stage>3?Q.why.map(w=>`<div>${w}</div>`).join(''):'';
+  $('#aitext').innerHTML=stage>3?(AI?`<b>Agentic shell</b> · ${Q.ai}`:`<b>Agentic shell off.</b> The verdict above is unchanged — the rules decided it, not the model.`):''; }
+// landmark name tags
+const lmEls=REG.map((g,i)=>{ const d=document.createElement('div'); d.className='lm'; d.innerHTML=`${g.name}<small>${g.tag}</small>`; d.style.color=g.css; d.onclick=()=>window.__goto(i); labelsEl.appendChild(d); return d; });
+
+/* ---------------- loop ---------------- */
+function dress(lm,ci){ if(lm.userData.halo) return;
+  { const pt=contact(REG[ci].hex,0.75); pt.material.opacity=1; pt.material.color.set(0xffffff).lerp(new THREE.Color(REG[ci].hex),0.35).multiplyScalar(1.6); if(lm.userData.coreMesh){ const b=new THREE.Box3().setFromObject(lm.userData.coreMesh); b.getCenter(pt.position); lm.worldToLocal(pt.position); } lm.add(pt); lm.userData.corePt=pt; } const h=contact(REG[ci].hex,11); h.material.opacity=STILL?0.28:0; lm.add(h); lm.userData.halo=h;
+      // Physical models carry their own structural rings; keep their silhouette clear.
+      if(lm.userData.pbr){ lm.userData.orb=[]; return; }
+      // the same family as the eye: two thin tilted orbits in the region's hue, one light travelling on each
+      const orb=new THREE.Group(); lm.add(orb); lm.userData.orb=[];
+      [[3.4,0.8,0.3,0.42],[4.3,-0.5,0.9,-0.3]].forEach(([r,tx,tz,w],i)=>{ const piv=new THREE.Group(); piv.rotation.set(tx,0,tz); orb.add(piv);
+        const ring=new THREE.Mesh(new THREE.TorusGeometry(r,0.014,6,160),new THREE.MeshBasicMaterial({color:REG[ci].hex,transparent:true,opacity:0.2,toneMapped:false})); piv.add(ring);
+        const node=contact(REG[ci].hex,0.8); node.material.opacity=0.95; node.material.color.set(REG[ci].hex); piv.add(node);
+        const glow=contact(REG[ci].hex,2.4); glow.material.opacity=0.38; glow.material.color.set(REG[ci].hex).multiplyScalar(0.6); piv.add(glow);
+        const a0=i*2.3+ci*1.1; node.position.set(Math.cos(a0)*r,Math.sin(a0)*r,0); glow.position.copy(node.position);
+        lm.userData.orb.push({piv,ring,node,glow,r,w}); }); }
+const clock=new THREE.Clock(), v3=new THREE.Vector3();
+let bootT=STILL?1:0, blinkT=4, bootOrder=[]; if(!STILL) document.documentElement.classList.add('boot');
+landmarks.forEach(lm=>{ lm.userData.base=lm.scale.x; });
+let workspaceOpen=false;
+addEventListener('zola-workspace',e=>{workspaceOpen=e.detail;if(!workspaceOpen){bootT=1;document.documentElement.classList.remove('boot');clock.getDelta();frame();}});
+let animationRequest=0;
+function queueFrame(){cancelAnimationFrame(animationRequest);animationRequest=requestAnimationFrame(frame);}
+function frame(){ cancelAnimationFrame(animationRequest);animationRequest=0;if(!STILL&&(document.hidden||workspaceOpen)){clock.getDelta();return;} const dt=Math.min(0.05,clock.getDelta()), t=clock.elapsedTime;
+  if(!sized) resize(); if(!sized){ if(!STILL) queueFrame(); return; }
+  landmarks.forEach(dress);
+  if(!STILL){
+    if(tourT>=0){ tourT+=dt; const step=Math.floor(tourT/TOUR_STEP); if(step>=TOUR_SEQ.length){ stopTour(); } else { const want=TOUR_SEQ[step]; if(want!==cur) goto(want); } }
+    if(!REDUCED&&tourT<0&&cur<0&&!dragging) tht+=dt*0.018;             // idle drift on the overview only — standby, not weather
+    pmx+=((REDUCED?0:mx)-pmx)*Math.min(1,dt*2); pmy+=((REDUCED?0:my)-pmy)*Math.min(1,dt*2);
+    F.lerp(Ft,(1-Math.exp(-dt*3.2))); dist+=(distt-dist)*(1-Math.exp(-dt*3.2)); th+=(tht-th)*(1-Math.exp(-dt*4.2)); ph+=(pht-ph)*(1-Math.exp(-dt*4.2));
+    if(playing){ chainT=Math.min(1,chainT+dt/2.6); renderVerdict(chainT); if(chainT>=1) playing=false; }
+    if(cur>=0&&pageT<1){ pageT=Math.min(1,pageT+dt/3.2); paintPage(pageT); }
+    // boot: the world assembles from the core outward over ~3 s, then the UI fades up
+    if(bootT<1){ bootT=Math.min(1,bootT+dt/2.6); if(bootT>=0.7&&document.documentElement.classList.contains('boot')) document.documentElement.classList.remove('boot'); }
+    if(divePulse>0){ divePulse=Math.max(0,divePulse-dt*1.6); } bloom.intensity=BLOOM0+0.7*Math.sin(divePulse*Math.PI);
+    // the eye blinks: every 6–9 s the pupil and iris close for 120 ms, mechanically, then open
+    blinkT-=dt; if(blinkT<-0.14) blinkT=6+Math.random()*3; const blink=(!REDUCED && blinkT<0)?Math.max(0.08,1-Math.sin((-blinkT/0.14)*Math.PI)):1;
+    core.userData.blink=blink;
+    // one shared clock: every emitter in the world breathes in phase — the machine is on standby, not asleep
+    // ONE CLOCK: a 6 s breath every idle thing shares, phase-shifted per region so the world is one organism, not five metronomes
+    const CLK=(ph=0)=>0.5+0.5*Math.sin((REDUCED?0:t)*(Math.PI*2/6)+ph);
+    // boot as light, not scale: the eye lights first, then its rays, then the sky, then the landmarks nearest the camera
+    const bEye=Math.min(1,bootT/0.28), bRay=Math.min(1,Math.max(0,(bootT-0.12)/0.4)), bSky=Math.min(1,Math.max(0,(bootT-0.25)/0.5));
+    eyeMat.uniforms.boot.value=bEye; eyeMat.uniforms.t.value=t; godrays.blendMode.opacity.value=bRay;
+    galaxyMats.forEach(m=>{ if(m.uniforms.gain){ if(m.userData.g0===undefined) m.userData.g0=m.uniforms.gain.value; m.uniforms.gain.value=m.userData.g0*bSky; } });
+    if(!bootOrder.length&&landmarks.length){ bootOrder=landmarks.map((lm,ci)=>[lm.position.distanceTo(camera.position),ci]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]); }
+    landmarks.forEach((lm,ci)=>{ if(!REDUCED) IDLE[REG[ci].id](lm,t,dt);
+      const rank=bootOrder.indexOf(ci), rv=Math.min(1,Math.max(0,(bootT-0.38-rank*0.09)/0.3)), e=1-Math.pow(1-rv,3);
+      const br=1+0.05*CLK(ci*1.26), base=lm.userData.base||1;
+      lm.scale.setScalar(base*(0.82+0.18*e)); lm.userData.halo.material.opacity=(0.22+0.12*CLK(ci*1.26))*e*(hot===ci||cur===ci?2.1:(ATT.on===ci?1.7:1)); /* noticed by the eye: it brightens */
+      (lm.userData.orb||[]).forEach((R,i)=>{ R.piv.rotation.y+=dt*R.w*0.4; const M=t*R.w*1.7+i*2.3+ci*1.1, a=M+0.42*Math.sin(M); R.node.position.set(Math.cos(a)*R.r,Math.sin(a)*R.r,0); /* Kepler-like: fast near periapsis, slow far */ R.glow.position.copy(R.node.position); const f=hot===ci||cur===ci?1.8:1; R.ring.material.opacity=(0.12+0.12*CLK(i*2.1+ci))*e*f; R.glow.material.opacity=(0.26+0.2*CLK(i*2.1+ci))*e*f; R.node.material.opacity=0.95*e; });
+      lm.traverse(ch=>{ if(ch.isMesh&&ch.material.userData.emit){ ch.scale.setScalar(br*(0.2+0.8*e)); } }); });
+    // the eye: saccades toward where you are (small quick jumps every 1–3 s), slow drift between them, dilation when a door is under the pointer
+    GZ.next-=dt; if(GZ.next<0){ GZ.next=0.9+Math.random()*1.8; GZ.sy=(Math.random()-.5)*0.08; GZ.sp=(Math.random()-.5)*0.06; }
+    // real-time gaze: unproject the raw pointer onto a plane 12 units in front of the eye and aim at that point.
+    // Quick, unsmoothed, with a tiny saccade offset — an eye, not a damped camera.
+    // idle attention: after 4 s without pointer movement the eye starts glancing at planets (3–6 s each), then back to you
+    const idle=(performance.now()-lastMove)/1000;
+    if(idle>4&&cur<0){ ATT.next-=dt; if(ATT.next<0){ ATT.next=3+Math.random()*3; ATT.on=Math.random()<0.25?-1:Math.floor(Math.random()*landmarks.length); } } else { ATT.on=-1; ATT.next=1; }
+    let gx=mx, gy=my; if(ATT.on>=0){ v3.copy(landmarks[ATT.on].position).project(camera); ATT.gx+=(v3.x-ATT.gx)*Math.min(1,dt*3); ATT.gy+=(-v3.y-ATT.gy)*Math.min(1,dt*3); gx=ATT.gx; gy=ATT.gy; } else { ATT.gx=mx; ATT.gy=my; }
+    v3.set(gx,-gy,0.5).unproject(camera); const dirP=v3.sub(camera.position).normalize();
+    const toEye=core.position.clone().sub(camera.position); const tHit=Math.max(1,toEye.length()-12);
+    const target=camera.position.clone().addScaledVector(dirP,tHit); core.worldToLocal(target);
+    GZ.ty=Math.atan2(target.x,target.z)*0.85+(GZ.sy||0); GZ.tp=-Math.atan2(target.y,Math.hypot(target.x,target.z))*0.85+(GZ.sp||0);
+    // a damped spring, not a lerp: the eye arrives with a hair of overshoot, like a real saccade settling
+    GZ.vy=(GZ.vy||0)*Math.exp(-dt*18)+(GZ.ty-GZ.yaw)*dt*420; GZ.vp=(GZ.vp||0)*Math.exp(-dt*18)+(GZ.tp-GZ.pitch)*dt*420;
+    GZ.yaw+=GZ.vy*dt; GZ.pitch+=GZ.vp*dt;
+    GZ.yaw+=Math.sin(t*23.0)*0.0006+Math.sin(t*41.0)*0.0003;   // micro-tremor: a living eye is never perfectly still
+    gaze.rotation.set(GZ.pitch+Math.sin(t*0.37)*0.012, GZ.yaw+Math.sin(t*0.29)*0.015, 0);
+    GZ.dil+=((hot>=0||cur>=0?1.35:1.0)-GZ.dil)*Math.min(1,dt*4); eyeMat.uniforms.dil.value=GZ.dil*(0.96+0.04*CLK(0));
+    if(core.userData.physicalPupil){ const p=core.userData.physicalPupil,b=p.userData.baseScale,d=eyeMat.uniforms.dil.value; p.scale.set(b.x*d,b.y*d,b.z); }
+    // the blink closes the lids over the sphere
+    if(REDUCED){ gaze.rotation.set(0,0,0); if(core.userData.physicalPupil){ const p=core.userData.physicalPupil; p.scale.copy(p.userData.baseScale); } }
+    const b=core.userData.blink||1, lidA=(1-b)*Math.PI*0.5; core.userData.lids[0].rotation.x=-Math.PI/2+lidA*0.95; core.userData.lids[1].rotation.x=Math.PI/2-lidA*0.75;
+    // rings counter-rotate; each carries one light around its orbit; the corona breathes on the clock
+    core.userData.rings.forEach((R,i)=>{ if(!REDUCED) R.piv.rotation.y+=dt*R.w*0.35; const M=(REDUCED?0:t)*R.w*1.9+i*2.1, a=M+0.38*Math.sin(M); R.node.position.set(Math.cos(a)*R.r,Math.sin(a)*R.r,0); R.glow.position.copy(R.node.position); R.ring.material.opacity=0.14+0.12*CLK(i*2.1); R.glow.material.opacity=0.25+0.2*CLK(i*2.1); });
+    if(core.userData.corona) core.userData.corona.material.opacity=(0.14+0.10*CLK(0.7))*bEye;
+    core.scale.setScalar(1);
+    // sky: shells counter-drift and shimmer on different clocks; nebulae turn imperceptibly
+    if(!REDUCED){ starsA.rotation.y+=dt*0.004; starsB.rotation.y-=dt*0.0025; starsA.material.opacity=0.34+0.14*Math.sin(t*0.6); starsB.material.opacity=0.34+0.14*Math.sin(t*0.83+2.1);
+    starsC.material.opacity=0.38+0.08*Math.sin(t*0.37+1.3);
+    nebulae.forEach((n,i)=>{ n.rotateY(dt*0.002*(i%2?1:-1)); });   // slow body turn; the differential spin lives in the shader
+    galaxyMats.forEach(m=>{ m.uniforms.t.value=t; }); bodyMats.forEach(m=>{ m.uniforms.t.value=t; }); }
+  } else { F.copy(Ft); dist=distt; th=tht; ph=pht; }
+  place(); core.lookAt(camera.position);   // the eye looks at you in every frame, stills included
+  // the corona is a distance cue: full at the overview, gone by the time the eye fills the frame (stills too)
+  if(core.userData.corona){ const k=0.35+0.65*Math.min(1,Math.max(0,(dist-10)/22)); core.userData.corona.material.opacity*=k; }
+  divine.update(t,camera,cur,hot); lines.material.opacity=cur<0?.30:.12; paint(REDUCED?0:t); paintEdges();
+  if(ribbonCurve&&pulses){ const a=pulses.geometry.attributes.position; for(let i=0;i<6;i++){ ribbonCurve.getPointAt((((REDUCED?0:t)*0.09)+i/6)%1,v3); v3.toArray(a.array,i*3);} a.needsUpdate=true; }
+  camera.updateMatrixWorld(); camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
+  const placed=[];
+  const pageW=cur>=0?Math.min(innerWidth*0.64,900)+90:0;   // memory labels never sit on the page
+  labelEls.forEach((el,idx)=>{ v3.copy(nodes[idx].p).project(camera); const vis=v3.z<1&&Math.abs(v3.x)<1&&Math.abs(v3.y)<1; let x=(v3.x+1)/2*innerWidth, y=(1-v3.y)/2*innerHeight;
+    const on=vis&&W[idx]>0.5&&x>pageW; el.classList.toggle('on',on); if(!on) return; for(let k=0;k<8;k++){ const hit=placed.find(p=>Math.abs(p.y-y)<22&&Math.abs(p.x-x)<170); if(!hit) break; y=hit.y+22; } placed.push({x,y}); el.style.left=x+'px'; el.style.top=y+'px'; });
+  const lmPlaced=[];
+  lmEls.forEach((el,i)=>{ v3.copy(REG[i].c); v3.y+=4.2; v3.project(camera); const vis=v3.z<1&&Math.abs(v3.x)<1&&Math.abs(v3.y)<1; const far=dist>40||cur!==i;
+    const onPage=cur>=0&&((v3.x+1)/2*innerWidth)<Math.min(innerWidth*0.64,900); el.classList.toggle('on',vis&&far&&!onPage);
+    let x=(v3.x+1)/2*innerWidth, y=(1-v3.y)/2*innerHeight; for(let k=0;k<6;k++){ const hit=lmPlaced.find(p=>Math.abs(p.y-y)<30&&Math.abs(p.x-x)<110); if(!hit) break; y=hit.y+30; } lmPlaced.push({x,y});
+    el.style.left=x+'px'; el.style.top=y+'px'; });
+  // depth of field follows the focus: distance from camera to F, normalised into the camera's depth range
+  dof.target=F;
+  if(!STILL&&quality.mode==='auto'&&bootT>=1){ quality.cooldown=Math.max(0,quality.cooldown-dt); quality.slow=dt>.025?quality.slow+dt:Math.max(0,quality.slow-dt*.5); if(quality.slow>3&&quality.cooldown===0&&quality.ratio>.85){quality.ratio=Math.max(.85,quality.ratio-.2);renderer.setPixelRatio(quality.ratio);resize();quality.slow=0;quality.cooldown=8;} }
+  composer.render(dt);
+  if(!STILL) queueFrame(); }
+
+/* ---------------- boot ---------------- */
+paintEdges(); renderIndex();
+if(R0){ const ci=REG.findIndex(g=>g.id===R0); goto(ci,true); } else goto(-1,true);
+if(P.has('dist')){ distt=+P.get('dist'); dist=distt; }   // harness: ?dist=9 frames the core close
+if(Q0>=0){ goto(4,true); ask(Q0); }
+if(TOUR) startTour();
+frame();
+if(STILL){ requestAnimationFrame(()=>{ frame(); window.__ready=true; }); }
+// watchdog: if the browser stops delivering animation frames while the page is visible (embedded panes do this), keep the world alive
+let lastTick=performance.now(); const _f=frame; frame=function(){ lastTick=performance.now(); return _f.apply(this,arguments); };
+if(!STILL) setInterval(()=>{ if(document.visibilityState==='visible'&&performance.now()-lastTick>400) frame(); },250);
+addEventListener('visibilitychange',()=>{ if(!STILL&&!document.hidden){clock.getDelta();frame();} });
+window.__S={divine,quality,setQuality,skyCache,scene,camera,renderer,composer,inst,landmarks,core,REG,goto,ask,IDLE,assetLighting,bloom,dof,vignette,chroma,grain,nebulae,galaxyMats,milky,starsA,starsB,starsC,dust,lines,frame};
+window.__dbg=()=>({cam:camera.position.toArray().map(v=>+v.toFixed(1)),F:F.toArray().map(v=>+v.toFixed(1)),dist:+dist.toFixed(1),cur,QI,tour:tourT,landmarks:landmarks.map(l=>l.type),size:[renderer.domElement.width,renderer.domElement.height]});
+</script>
+<script type="module" src="./workspace.js"></script>
+<script type="module" src="./pilot.js"></script>
+</body>
+</html>

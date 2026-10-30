@@ -1,0 +1,14 @@
+{
+  "_note": "Synthetic demo book for the showoff. Nobody's real money. Edit freely; regenerate assets/demo-moves.json.",
+  "assets": [
+    {"name": "Credit sleeve (P2P + NCD)", "cls": "fixed_income", "amount": 248000},
+    {"name": "Contra fund", "cls": "equity", "amount": 112000},
+    {"name": "Flexi-cap fund", "cls": "equity", "amount": 64000},
+    {"name": "Silver ETF", "cls": "commodity", "amount": 58000},
+    {"name": "Gold ETF", "cls": "commodity", "amount": 31000},
+    {"name": "Crypto basket", "cls": "crypto", "amount": 42000},
+    {"name": "Term insurance", "cls": "insurance", "amount": 25000}
+  ],
+  "capacity": {"monthly": 14000, "rule": "salary minus burn, after the emergency fund"},
+  "valueHist": {"2026-05-31": 541000, "2026-06-30": 556000, "2026-07-31": 549000, "2026-08-31": 571000, "2026-09-30": 578000, "2026-10-19": 580000}
+}

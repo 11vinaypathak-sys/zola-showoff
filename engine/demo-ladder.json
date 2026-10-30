@@ -1,0 +1,18 @@
+{
+  "_note": "Synthetic career ladder for the showoff. Each rung lights only when every condition is ticked (dated). 'measurable': false marks a condition the system cannot verify from inside.",
+  "asof": "2026-10-22",
+  "current": "L3",
+  "rungs": [
+    {"level": "L1", "name": "Entry", "conditions": [{"text": "Onboarded", "done": "2021-02-01"}]},
+    {"level": "L2", "name": "Reliable delivery", "conditions": [{"text": "Twelve months without a missed handoff", "done": "2023-03-15"}]},
+    {"level": "L3", "name": "Credentialed, visible, shipping", "conditions": [{"text": "Certification at the top rung", "done": "2026-06-20"}, {"text": "One shipped artifact in public", "done": "2026-10-20"}]},
+    {"level": "L4", "name": "Own a shipped system in public", "conditions": [
+      {"text": "AI fluency · top rung", "done": "2026-06-20"},
+      {"text": "Shipped artifact in public", "done": "2026-10-20"},
+      {"text": "Trained others on the workflow", "done": "2026-09-02"},
+      {"text": "Evidence pack banked before review", "done": null, "due": "2026-11-15"},
+      {"text": "Visibility above own team", "done": null, "measurable": false}
+    ]},
+    {"level": "L5", "name": "Lead the workflow for others", "conditions": [{"text": "Two teams running the workflow", "done": null}, {"text": "A named sponsor above the studio", "done": null, "measurable": false}]}
+  ]
+}

@@ -1,0 +1,223 @@
+{
+ "asof": "2026-10-21",
+ "node": "creative",
+ "planned": 30,
+ "made": 22,
+ "rate": 0.7333,
+ "floor": 0.8,
+ "days": [
+  {
+   "planned": true,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": false,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": false
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": true
+  },
+  {
+   "planned": true,
+   "made": false
+  }
+ ],
+ "verdicts": [
+  {
+   "node": "creative",
+   "id": "cre.rate",
+   "metric": "sessions made against planned",
+   "value": 0.7333,
+   "unit": "share",
+   "threshold": 0.8,
+   "rule": "under 80% for six weeks and next month\u2019s plan shrinks to what was actually made",
+   "basis": {
+    "source": "engine/demo-sessions.json",
+    "n": 42,
+    "asof": "2026-10-21",
+    "level": "A"
+   },
+   "confidence": 0.95,
+   "move": {
+    "what": "plan 22 sessions next month, not 30",
+    "amount": null,
+    "unit": null,
+    "by": "2026-11-01"
+   },
+   "changes_if": "the six-week rate crosses 80%",
+   "verdict": "ACT"
+  },
+  {
+   "node": "creative",
+   "id": "cre.streak",
+   "metric": "current streak",
+   "value": 0,
+   "unit": "count",
+   "threshold": null,
+   "rule": "counted, not celebrated",
+   "basis": {
+    "source": "engine/demo-sessions.json",
+    "n": 42,
+    "asof": "2026-10-21",
+    "level": "A"
+   },
+   "move": null,
+   "confidence": 1.0,
+   "changes_if": "tomorrow",
+   "verdict": "SETTLED"
+  }
+ ]
+}

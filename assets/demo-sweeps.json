@@ -1,0 +1,194 @@
+{
+ "asof": "2026-10-29",
+ "node": "intel",
+ "start": "2026-09-29",
+ "days": 31,
+ "threshold": -0.5,
+ "sweeps": 62,
+ "signals": [
+  {
+   "day": 8.0,
+   "spread": -0.62,
+   "source": "Sponsor register update",
+   "kind": "signal",
+   "note": "register changed hands"
+  },
+  {
+   "day": 17.0,
+   "spread": -0.71,
+   "source": "Named-source confirmation",
+   "kind": "signal",
+   "note": "two independent confirmations"
+  },
+  {
+   "day": 21.0,
+   "spread": -0.74,
+   "source": "Filing",
+   "kind": "signal",
+   "note": "spread crossed \u22120.7"
+  }
+ ],
+ "watches": [
+  {
+   "day": 4.5,
+   "spread": -0.53,
+   "source": null,
+   "kind": "watch",
+   "note": null
+  },
+  {
+   "day": 26.0,
+   "spread": -0.56,
+   "source": null,
+   "kind": "watch",
+   "note": null
+  }
+ ],
+ "silent": 57,
+ "gaps": [
+  {
+   "from_day": 8.0,
+   "to_day": 17.0,
+   "days": 9.0
+  },
+  {
+   "from_day": 17.0,
+   "to_day": 21.0,
+   "days": 4.0
+  }
+ ],
+ "verdicts": [
+  {
+   "node": "intel",
+   "id": "int.signal.8",
+   "metric": "spread vs control \u00b7 sponsor register update",
+   "value": -0.62,
+   "unit": "pts",
+   "threshold": -0.5,
+   "rule": "a crossing below -0.5 with a named source is a signal",
+   "basis": {
+    "source": "engine/demo-sweeps.json",
+    "n": 62,
+    "asof": "2026-10-29",
+    "level": "A"
+   },
+   "confidence": 0.85,
+   "move": {
+    "what": "move the lead to the front of the week",
+    "amount": null,
+    "unit": null,
+    "by": "2026-10-08"
+   },
+   "changes_if": "the spread recovers above -0.5 or the source is withdrawn",
+   "verdict": "ACT",
+   "date": "2026-10-07"
+  },
+  {
+   "node": "intel",
+   "id": "int.signal.17",
+   "metric": "spread vs control \u00b7 named-source confirmation",
+   "value": -0.71,
+   "unit": "pts",
+   "threshold": -0.5,
+   "rule": "a crossing below -0.5 with a named source is a signal",
+   "basis": {
+    "source": "engine/demo-sweeps.json",
+    "n": 62,
+    "asof": "2026-10-29",
+    "level": "A"
+   },
+   "confidence": 0.85,
+   "move": {
+    "what": "move the lead to the front of the week",
+    "amount": null,
+    "unit": null,
+    "by": "2026-10-17"
+   },
+   "changes_if": "the spread recovers above -0.5 or the source is withdrawn",
+   "verdict": "ACT",
+   "date": "2026-10-16"
+  },
+  {
+   "node": "intel",
+   "id": "int.signal.21",
+   "metric": "spread vs control \u00b7 filing",
+   "value": -0.74,
+   "unit": "pts",
+   "threshold": -0.5,
+   "rule": "a crossing below -0.5 with a named source is a signal",
+   "basis": {
+    "source": "engine/demo-sweeps.json",
+    "n": 62,
+    "asof": "2026-10-29",
+    "level": "A"
+   },
+   "confidence": 0.85,
+   "move": {
+    "what": "move the lead to the front of the week",
+    "amount": null,
+    "unit": null,
+    "by": "2026-10-21"
+   },
+   "changes_if": "the spread recovers above -0.5 or the source is withdrawn",
+   "verdict": "ACT",
+   "date": "2026-10-20"
+  },
+  {
+   "node": "intel",
+   "id": "int.watch.4.5",
+   "metric": "spread vs control \u00b7 no named source",
+   "value": -0.53,
+   "unit": "pts",
+   "threshold": -0.5,
+   "rule": "a crossing without a named source is a watch, not a signal",
+   "basis": {
+    "source": "engine/demo-sweeps.json",
+    "n": 62,
+    "asof": "2026-10-29",
+    "level": "A"
+   },
+   "confidence": 0.6,
+   "move": null,
+   "changes_if": "a source is named or the spread recovers",
+   "verdict": "WAIT"
+  },
+  {
+   "node": "intel",
+   "id": "int.watch.26",
+   "metric": "spread vs control \u00b7 no named source",
+   "value": -0.56,
+   "unit": "pts",
+   "threshold": -0.5,
+   "rule": "a crossing without a named source is a watch, not a signal",
+   "basis": {
+    "source": "engine/demo-sweeps.json",
+    "n": 62,
+    "asof": "2026-10-29",
+    "level": "A"
+   },
+   "confidence": 0.6,
+   "move": null,
+   "changes_if": "a source is named or the spread recovers",
+   "verdict": "WAIT"
+  },
+  {
+   "node": "intel",
+   "id": "int.silence",
+   "metric": "sweeps run \u00b7 silent",
+   "value": 57,
+   "unit": "count",
+   "threshold": null,
+   "rule": "silence after a sweep is a result and is logged as one",
+   "basis": {
+    "source": "engine/demo-sweeps.json",
+    "n": 62,
+    "asof": "2026-10-29",
+    "level": "A"
+   },
+   "move": null,
+   "confidence": 1.0,
+   "changes_if": "a sweep returns a crossing",
+   "verdict": "SETTLED"
+  }
+ ]
+}

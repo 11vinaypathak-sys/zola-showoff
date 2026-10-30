@@ -1,0 +1,192 @@
+{
+ "asof": "2026-10-22",
+ "node": "finance",
+ "total": 580000,
+ "eff_n": 3.96,
+ "hhi": 0.2523,
+ "capacity": 14000,
+ "rules": {
+  "holding_cap": 0.35,
+  "per_move_risk_pct": 0.05,
+  "min_history": 10,
+  "eff_n_floor": 5,
+  "class_caps": {
+   "crypto": 0.1,
+   "commodity": 0.15,
+   "equity": 0.4,
+   "equity_global": 0.2,
+   "fixed_income": 0.55,
+   "arbitrage": 0.3,
+   "sovereign_debt": 0.3,
+   "real_assets": 0.15
+  }
+ },
+ "verdicts": [
+  {
+   "node": "finance",
+   "id": "fin.cap.credit_sleeve__p2p___ncd",
+   "metric": "holding share \u00b7 Credit sleeve (P2P + NCD)",
+   "value": 0.4276,
+   "unit": "share",
+   "threshold": 0.35,
+   "rule": "holding cap",
+   "basis": {
+    "source": "engine/demo-book.json",
+    "n": 7,
+    "asof": "2026-10-22",
+    "level": "A"
+   },
+   "confidence": 0.9,
+   "move": {
+    "what": "trim Credit sleeve (P2P + NCD)",
+    "amount": 45000,
+    "unit": "INR",
+    "by": "2026-10-23"
+   },
+   "changes_if": "the cap is edited or the book total moves more than 5%",
+   "verdict": "ACT"
+  },
+  {
+   "node": "finance",
+   "id": "fin.deploy.equity_global",
+   "metric": "exposure \u00b7 overseas equity",
+   "value": 0.0,
+   "unit": "share",
+   "threshold": null,
+   "rule": "a class at zero is a hole, not a view",
+   "basis": {
+    "source": "engine/demo-book.json",
+    "n": 7,
+    "asof": "2026-10-22",
+    "level": "A"
+   },
+   "confidence": 0.8,
+   "detail": {
+    "rank": 1,
+    "eff_n_now": 3.27,
+    "eff_n_after": 3.43,
+    "class_cap": 0.2,
+    "room": 116000,
+    "per_move_budget": 29000,
+    "downside": -2800
+   },
+   "changes_if": "capacity, class caps or conviction are edited; the book total moves more than 5%",
+   "move": {
+    "what": "deploy into overseas equity",
+    "amount": 14000,
+    "unit": "INR",
+    "by": "2026-10-23"
+   },
+   "verdict": "ACT"
+  },
+  {
+   "node": "finance",
+   "id": "fin.deploy.real_assets",
+   "metric": "exposure \u00b7 real assets",
+   "value": 0.0,
+   "unit": "share",
+   "threshold": null,
+   "rule": "a class at zero is a hole, not a view",
+   "basis": {
+    "source": "engine/demo-book.json",
+    "n": 7,
+    "asof": "2026-10-22",
+    "level": "A"
+   },
+   "confidence": 0.8,
+   "detail": {
+    "rank": 2,
+    "eff_n_now": 3.27,
+    "eff_n_after": 3.43,
+    "class_cap": 0.15,
+    "room": 87000,
+    "per_move_budget": 29000,
+    "downside": -3500
+   },
+   "changes_if": "capacity, class caps or conviction are edited; the book total moves more than 5%",
+   "move": {
+    "what": "deploy into real assets",
+    "amount": 14000,
+    "unit": "INR",
+    "by": "2026-10-23"
+   },
+   "verdict": "ACT"
+  },
+  {
+   "node": "finance",
+   "id": "fin.deploy.sovereign_debt",
+   "metric": "exposure \u00b7 sovereign debt",
+   "value": 0.0,
+   "unit": "share",
+   "threshold": null,
+   "rule": "a class at zero is a hole, not a view",
+   "basis": {
+    "source": "engine/demo-book.json",
+    "n": 7,
+    "asof": "2026-10-22",
+    "level": "A"
+   },
+   "confidence": 0.8,
+   "detail": {
+    "rank": 3,
+    "eff_n_now": 3.27,
+    "eff_n_after": 3.43,
+    "class_cap": 0.3,
+    "room": 174000,
+    "per_move_budget": 29000,
+    "downside": -1120
+   },
+   "changes_if": "capacity, class caps or conviction are edited; the book total moves more than 5%",
+   "move": {
+    "what": "deploy into sovereign debt",
+    "amount": 14000,
+    "unit": "INR",
+    "by": "2026-10-23"
+   },
+   "verdict": "ACT"
+  },
+  {
+   "node": "finance",
+   "id": "fin.structure",
+   "metric": "effective holdings",
+   "value": 3.96,
+   "unit": "count",
+   "threshold": 5,
+   "rule": "a book with under 5 effective positions is one event away from a bad year",
+   "basis": {
+    "source": "engine/demo-book.json",
+    "n": 7,
+    "asof": "2026-10-22",
+    "level": "A"
+   },
+   "move": null,
+   "confidence": 0.95,
+   "changes_if": "any holding changes by more than 5% of the book",
+   "verdict": "ACT"
+  },
+  {
+   "node": "finance",
+   "id": "fin.data.history",
+   "metric": "book value history",
+   "value": 6,
+   "unit": "points",
+   "threshold": 10,
+   "rule": "volatility and drawdown need 10 points",
+   "basis": {
+    "source": "engine/demo-book.json",
+    "n": 7,
+    "asof": "2026-10-22",
+    "level": "B"
+   },
+   "move": {
+    "what": "log the book total weekly, one number",
+    "amount": null,
+    "unit": null,
+    "by": null
+   },
+   "confidence": 1.0,
+   "changes_if": "10 or more points exist",
+   "verdict": "DATA"
+  }
+ ]
+}

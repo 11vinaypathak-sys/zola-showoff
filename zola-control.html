@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ZOLA · Control</title>
+<style>
+  :root{
+    --bg:#08090b; --panel:rgba(255,255,255,.03); --panel2:rgba(255,255,255,.05);
+    --line:rgba(255,255,255,.08); --ink:#e8eaed; --dim:#8b8f96; --faint:#5a5e66;
+    --lime:#c6ff2e; --teal:#4fd6c0; --amber:#ffb454; --red:#ff6b6b; --blue:#74c7ff;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,rgba(198,255,46,.06),transparent 60%),var(--bg);
+       color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 22px 80px}
+  .top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+  .brand{font-family:var(--mono);font-weight:600;letter-spacing:.28em;font-size:13px;color:var(--lime)}
+  .brand b{color:var(--ink)}
+  .sub{color:var(--dim);font-size:12px;font-family:var(--mono)}
+  h2{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);
+     margin:34px 0 12px;font-family:var(--mono)}
+
+  /* pulse */
+  .pulse{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .stat .k{font-size:11px;color:var(--dim);font-family:var(--mono);letter-spacing:.06em}
+  .stat .v{font-size:26px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+  .stat .v small{font-size:12px;color:var(--dim);font-weight:400}
+  .gate{border-color:rgba(198,255,46,.35);background:linear-gradient(180deg,rgba(198,255,46,.08),transparent)}
+  .gate .v{color:var(--lime)}
+
+  /* nodes */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;
+        transition:.15s border-color,.15s transform;cursor:pointer;position:relative}
+  .card:hover{border-color:rgba(198,255,46,.4);transform:translateY(-2px)}
+  .card .nm{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal)}
+  .dot.off{background:var(--faint);box-shadow:none}
+  .card .ds{color:var(--dim);font-size:12.5px;margin-top:5px}
+  .card .meta{color:var(--faint);font-size:11px;font-family:var(--mono);margin-top:10px}
+
+  /* ds learnings cms */
+  .split{display:grid;grid-template-columns:1.3fr .9fr;gap:16px}
+  @media(max-width:820px){.split{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+  .person{border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:10px;background:var(--panel2)}
+  .person h4{margin:0;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+  .person h4 span{font-size:11px;color:var(--teal);font-family:var(--mono);font-weight:500}
+  .learn{font-size:13px;color:#cfd3d9;margin:8px 0 0;padding-left:14px;position:relative}
+  .learn:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--lime)}
+  .empty{color:var(--faint);font-size:12px;font-style:italic;margin-top:8px}
+  .chip{display:inline-block;font-size:11px;font-family:var(--mono);color:var(--dim);
+        border:1px solid var(--line);border-radius:999px;padding:2px 9px;margin:4px 4px 0 0}
+  label{display:block;font-size:11px;color:var(--dim);font-family:var(--mono);letter-spacing:.06em;margin:12px 0 5px}
+  input,textarea,select{width:100%;background:#0d0f12;border:1px solid var(--line);border-radius:10px;
+        color:var(--ink);padding:10px 12px;font-family:var(--sans);font-size:13px;outline:none}
+  input:focus,textarea:focus,select:focus{border-color:rgba(198,255,46,.5)}
+  textarea{resize:vertical;min-height:70px}
+  .btn{margin-top:14px;background:var(--lime);color:#0a0c00;border:none;border-radius:10px;padding:11px 16px;
+       font-weight:600;font-size:13px;cursor:pointer;font-family:var(--sans)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .skill{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:9px 0}
+  .skill:last-child{border-bottom:none}
+  .skill .why{color:var(--dim);font-size:12px}
+  .st{font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--amber)}
+  .feed{font-family:var(--mono);font-size:12px}
+  .feed .row{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);color:var(--dim)}
+  .feed .row:last-child{border:none}
+  .feed .t{color:var(--faint)} .feed .j{color:var(--teal);min-width:70px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--lime);color:#0a0c00;
+        padding:11px 20px;border-radius:12px;font-weight:600;font-size:13px;opacity:0;transition:.25s;pointer-events:none}
+  .toast.show{opacity:1}
+  .barlink{color:var(--faint);font-size:12px;font-family:var(--mono)}
+  .barlink:hover{color:var(--lime)}
+
+  /* backbone CMS */
+  .cms-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .fchip{font-family:var(--mono);font-size:12px;color:var(--dim);border:1px solid var(--line);
+        border-radius:999px;padding:6px 13px;cursor:pointer;transition:.12s}
+  .fchip:hover{border-color:rgba(198,255,46,.4);color:var(--ink)}
+  .fchip.sel{background:var(--lime);color:#0a0c00;border-color:var(--lime);font-weight:500}
+  .cms-bar{display:flex;align-items:center;gap:10px;margin:4px 0 12px}
+  .cms-bar .fn{font-family:var(--mono);font-size:13px;color:var(--teal)}
+  .cms-bar .warn{font-family:var(--mono);font-size:11px;color:var(--amber)}
+  .modetog{margin-left:auto;display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .modetog button{background:transparent;color:var(--dim);border:none;padding:5px 12px;font-size:11px;
+        font-family:var(--mono);cursor:pointer}
+  .modetog button.on{background:var(--panel2);color:var(--lime)}
+  #cmsTree{max-height:520px;overflow:auto;font-family:var(--mono);font-size:12.5px}
+  .cf{margin:1px 0 1px 2px}
+  .cf-head{display:flex;align-items:center;gap:7px;padding:3px 0}
+  .cf-tog{color:var(--faint);cursor:pointer;width:12px;display:inline-block;user-select:none}
+  .cf-key{color:var(--blue)}
+  .cf-type{color:var(--faint);font-size:11px}
+  .cf-kids{margin-left:16px;border-left:1px solid var(--line);padding-left:12px}
+  .cf-leaf{display:flex;align-items:center;gap:8px;padding:2px 0}
+  .cf-leaf .cf-key{min-width:120px;color:var(--dim)}
+  .cf-in{flex:1;background:#0d0f12;border:1px solid var(--line);border-radius:7px;color:var(--ink);
+        padding:5px 9px;font-family:var(--mono);font-size:12px;outline:none;min-width:0}
+  .cf-in:focus{border-color:rgba(198,255,46,.5)}
+  textarea.cf-in{resize:vertical;min-height:34px;width:100%}
+  .cf-del{color:var(--faint);cursor:pointer;border:none;background:none;font-size:14px;padding:0 4px}
+  .cf-del:hover{color:var(--red)}
+  .cf-ctl{margin:5px 0}
+  .cf-add{background:transparent;border:1px dashed var(--line);color:var(--dim);border-radius:7px;
+        padding:3px 10px;font-size:11px;font-family:var(--mono);cursor:pointer}
+  .cf-add:hover{border-color:var(--teal);color:var(--teal)}
+  #cmsRaw{width:100%;min-height:420px;background:#0d0f12;border:1px solid var(--line);border-radius:10px;
+        color:var(--ink);padding:12px;font-family:var(--mono);font-size:12px;outline:none;resize:vertical;display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand">ZOLA<b> · CONTROL</b></div>
+    <div class="sub"><a class="barlink" href="/zola.html">open app →</a> &nbsp; <span id="clock"></span></div>
+  </div>
+  <div class="sub" style="color:var(--dim)">one plane over the whole engine — honest status, every node, and the gate</div>
+
+  <div class="pulse" id="pulse"></div>
+
+  <h2>Quick edit · per node <span style="color:var(--dim);font-weight:400;font-size:12px">— goals + finance · saves live</span></h2>
+  <div id="quickEdit" class="grid"><div class="panel" style="color:var(--dim)">loading…</div></div>
+
+  <h2>Self-improving loop <span style="color:var(--dim);font-weight:400;font-size:12px">— what ZOLA has learned actually works (from real outcomes, not opinion)</span></h2>
+  <div id="loopPanel" class="grid"><div class="panel" style="color:var(--dim)">loading…</div></div>
+
+  <h2>Nodes</h2>
+  <div class="grid" id="nodes"></div>
+
+  <h2>DS learnings — your network</h2>
+  <div class="split">
+    <div class="panel">
+      <div id="people"></div>
+      <div id="skills" style="margin-top:16px"></div>
+    </div>
+    <div class="panel">
+      <div style="font-weight:600;font-size:14px">Add a learning</div>
+      <div style="color:var(--dim);font-size:12px;margin-top:3px">from a conversation — what you learned, and the skill it points to</div>
+      <label>Person</label>
+      <select id="who"></select>
+      <label>What you learned</label>
+      <textarea id="what" placeholder="e.g. Abhimanyu: don't fine-tune first — retrieval + a tight eval loop beats a bigger model…"></textarea>
+      <label>Skill it points to (optional)</label>
+      <input id="skill" placeholder="e.g. RAG evaluation" />
+      <button class="btn" id="save">Save learning</button>
+    </div>
+  </div>
+
+  <h2>Backbone CMS — edit any node, live</h2>
+  <div class="panel">
+    <div class="cms-chips" id="cmsChips"></div>
+    <div id="cmsEditor" style="display:none">
+      <div class="cms-bar">
+        <span class="fn" id="cmsFn"></span>
+        <span class="warn" id="cmsWarn"></span>
+        <div class="modetog">
+          <button id="modeTree" class="on" onclick="cmsMode='tree';syncMode()">tree</button>
+          <button id="modeRaw" onclick="cmsMode='raw';syncMode()">raw JSON</button>
+        </div>
+      </div>
+      <div id="cmsTree"></div>
+      <textarea id="cmsRaw" spellcheck="false"></textarea>
+      <button class="btn" id="cmsSave" onclick="cmsSave()">Save changes</button>
+      <span style="color:var(--faint);font-size:11px;margin-left:10px">every save makes a timestamped backup in ~/.zola/backups</span>
+    </div>
+  </div>
+
+  <h2>Recent activity</h2>
+  <div class="panel feed" id="feed"></div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+let DSL = null;
+
+function fmtAgo(ts){
+  if(!ts) return "—";
+  const d = Math.floor(Date.now()/1000 - ts);
+  if(d<60) return d+"s"; if(d<3600) return Math.floor(d/60)+"m";
+  if(d<86400) return Math.floor(d/3600)+"h"; return Math.floor(d/86400)+"d";
+}
+function esc(s){return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
+
+async function loadControl(){
+  let d; try{ d = await (await fetch("/api/control")).json(); }catch(e){ return; }
+  if(d.error){ $("#pulse").innerHTML = '<div class="stat"><div class="k">engine</div><div class="v" style="font-size:14px">'+esc(d.error)+'</div></div>'; return; }
+  const e = d.engine || {};
+  const pend = (e.candidates||[]).length;
+  $("#pulse").innerHTML = [
+    stat("events logged", e.events||0),
+    stat("last self-evolve", e.last_cycle ? e.last_cycle.split("T")[1].slice(0,5) : "never", e.last_cycle?"":"small"),
+    stat("reward rated", (e.ratings||0), "<small> · "+(e.good||0)+" good / "+(e.bad||0)+" bad</small>"),
+    '<div class="stat gate"><div class="k">at the gate</div><div class="v">'+pend+' <small>awaiting review</small></div></div>'
+  ].join("");
+  $("#nodes").innerHTML = (d.nodes||[]).map(n=>`
+    <div class="card" onclick="location.href='/zona.html'">
+      <div class="nm"><span class="dot ${n.exists?'':'off'}"></span>${esc(n.desc)}</div>
+      <div class="ds">${esc(n.file)}</div>
+      <div class="meta">${n.exists? (Math.round(n.size/102.4)/10)+' KB · updated '+fmtAgo(n.updated)+' ago' : 'not created yet'}</div>
+    </div>`).join("");
+  $("#feed").innerHTML = (e.recent||[]).map(r=>`
+    <div class="row"><span class="t">${(r.iso||'').split('T')[1]?.slice(0,8)||''}</span>
+    <span class="j">${esc(r.job||'')}</span><span>${esc(r.event||'')}</span>
+    <span style="color:var(--faint)">${esc((r.detail||'').slice(0,40))}</span></div>`).join("")
+    || '<div style="color:var(--faint)">no activity yet — the log fills as the engine runs</div>';
+}
+function stat(k,v,extra){return `<div class="stat"><div class="k">${k}</div><div class="v">${v}${extra&&extra!=='small'?extra:''}</div></div>`;}
+
+async function loadDSL(){
+  try{ DSL = await (await fetch("/zola-ds-learnings.local.json?"+Date.now())).json(); }catch(e){ DSL={people:[],skills_to_build:[]}; }
+  $("#people").innerHTML = (DSL.people||[]).map(p=>`
+    <div class="person">
+      <h4>${esc(p.name)} <span>${esc(p.role||'')}</span></h4>
+      ${(p.skills||[]).map(s=>`<span class="chip">${esc(s)}</span>`).join("")}
+      ${(p.learnings&&p.learnings.length)
+          ? p.learnings.map(l=>`<div class="learn">${esc(typeof l==='string'?l:l.text)}</div>`).join("")
+          : '<div class="empty">no learnings captured yet — add one →</div>'}
+    </div>`).join("");
+  $("#skills").innerHTML = '<div style="font-size:11px;color:var(--faint);font-family:var(--mono);letter-spacing:.1em;margin-bottom:8px">SKILLS TO BUILD</div>'
+    + (DSL.skills_to_build||[]).map(s=>`
+      <div class="skill"><div><b>${esc(s.skill)}</b><div class="why">${esc(s.why||'')}</div></div>
+      <div class="st">${esc(s.status||'')}</div></div>`).join("");
+  $("#who").innerHTML = (DSL.people||[]).map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("")
+    + '<option value="__new">+ new person…</option>';
+}
+
+$("#save").addEventListener("click", async ()=>{
+  const what = $("#what").value.trim(); if(!what){ toast("write the learning first"); return; }
+  let who = $("#who").value;
+  if(who==="__new"){ const nm=prompt("New person's name?"); if(!nm) return;
+    const id = nm.toLowerCase().replace(/[^a-z0-9]+/g,"-");
+    DSL.people.push({id, name:nm, role:"", skills:[], learnings:[]}); who=id; }
+  const p = DSL.people.find(x=>x.id===who);
+  p.learnings = p.learnings||[];
+  p.learnings.push({ text: what, skill: $("#skill").value.trim(), at: new Date().toISOString().slice(0,10) });
+  DSL.updated = new Date().toISOString().slice(0,10);
+  $("#save").disabled = true;
+  try{
+    const r = await fetch("/save-ds-learnings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(DSL)});
+    if(!r.ok) throw 0;
+    $("#what").value=""; $("#skill").value="";
+    await loadDSL(); toast("learning saved");
+  }catch(e){ toast("save failed — is zola-server running?"); }
+  $("#save").disabled = false;
+});
+
+/* ── Backbone CMS ── */
+const CMS_FILES = [
+  {f:'zola-ds-learnings.local.json', n:'DS learnings'},
+  {f:'zola-white.local.json',        n:'White · career'},
+  {f:'zola-ds-library.local.json',   n:'DS library'},
+  {f:'zola-intel.local.json',        n:'Radar'},
+  {f:'zola-exit.local.json',         n:'Exit'},
+  {f:'zola-brain.local.json',        n:'Brain'},
+  {f:'zola-inbox.local.json',        n:'Inbox'},
+  {f:'zola-profile.local.json',      n:'Profile'},
+  {f:'zola-command.local.json',      n:'Command'},
+  {f:'zola-data.json',               n:'Core (app-owned)', warn:true},
+];
+let CMS = { file:null, data:null };
+let cmsMode = 'tree';
+
+function renderCmsChips(){
+  $("#cmsChips").innerHTML = CMS_FILES.map(x =>
+    `<span class="fchip${CMS.file===x.f?' sel':''}" onclick="cmsLoad('${x.f}',${!!x.warn})">${esc(x.n)}</span>`).join("");
+}
+async function cmsLoad(file, warn){
+  try{
+    const d = await (await fetch('/api/cms?file='+encodeURIComponent(file))).json();
+    if(d.error){ toast('load failed: '+d.error); return; }
+    CMS.file = d.file; CMS.data = d.data;
+    $("#cmsEditor").style.display = 'block';
+    $("#cmsFn").textContent = d.file;
+    $("#cmsWarn").textContent = warn ? '⚠ the app owns this — edit with zona.html closed to avoid overwrite' : '';
+    renderCmsChips(); renderCmsTree(); syncMode();
+  }catch(e){ toast('load error'); }
+}
+function cloneShape(s){
+  if(Array.isArray(s)) return [];
+  if(s && typeof s==='object'){ const o={}; for(const k in s) o[k]=cloneShape(s[k]); return o; }
+  if(typeof s==='number') return 0;
+  if(typeof s==='boolean') return false;
+  return '';
+}
+function cmsField(parent, key){
+  const val = parent[key];
+  const wrap = document.createElement('div'); wrap.className='cf';
+  if(val !== null && typeof val==='object'){
+    const isArr = Array.isArray(val);
+    const head = document.createElement('div'); head.className='cf-head';
+    const tog = document.createElement('span'); tog.className='cf-tog'; tog.textContent='▾';
+    const kk = document.createElement('span'); kk.className='cf-key'; kk.textContent = String(key);
+    const tp = document.createElement('span'); tp.className='cf-type'; tp.textContent = isArr?('['+val.length+']'):'{ }';
+    const del = document.createElement('button'); del.className='cf-del'; del.textContent='×';
+    del.onclick = ()=>{ if(Array.isArray(parent)) parent.splice(key,1); else delete parent[key]; renderCmsTree(); };
+    head.appendChild(tog); head.appendChild(kk); head.appendChild(tp); head.appendChild(del);
+    const kids = document.createElement('div'); kids.className='cf-kids';
+    tog.onclick = ()=>{ const h = kids.style.display==='none'; kids.style.display = h?'':'none'; tog.textContent = h?'▾':'▸'; };
+    (isArr ? val.map((_,i)=>i) : Object.keys(val)).forEach(k => kids.appendChild(cmsField(val,k)));
+    const ctl = document.createElement('div'); ctl.className='cf-ctl';
+    const add = document.createElement('button'); add.className='cf-add';
+    if(isArr){ add.textContent='+ item'; add.onclick=()=>{ val.push(cloneShape(val[0])); renderCmsTree(); }; }
+    else { add.textContent='+ field'; add.onclick=()=>{ const nk=prompt('new field name'); if(nk){ val[nk]=''; renderCmsTree(); } }; }
+    ctl.appendChild(add); kids.appendChild(ctl);
+    wrap.appendChild(head); wrap.appendChild(kids);
+  } else {
+    const row = document.createElement('div'); row.className='cf-leaf';
+    const kk = document.createElement('span'); kk.className='cf-key'; kk.textContent = String(key);
+    const t = typeof val; let inp;
+    if(t==='boolean'){ inp=document.createElement('input'); inp.type='checkbox'; inp.checked=val;
+      inp.className='cf-in'; inp.style.flex='none'; inp.onchange=()=>{ parent[key]=inp.checked; }; }
+    else if(t==='number'){ inp=document.createElement('input'); inp.type='number'; inp.value=val;
+      inp.className='cf-in'; inp.oninput=()=>{ parent[key]= inp.value===''?0:Number(inp.value); }; }
+    else { const s = val==null?'':String(val); const long = s.length>48;
+      inp=document.createElement(long?'textarea':'input'); inp.value=s; inp.className='cf-in';
+      inp.oninput=()=>{ parent[key]=inp.value; }; }
+    const del = document.createElement('button'); del.className='cf-del'; del.textContent='×';
+    del.onclick = ()=>{ if(Array.isArray(parent)) parent.splice(key,1); else delete parent[key]; renderCmsTree(); };
+    row.appendChild(kk); row.appendChild(inp); row.appendChild(del);
+    wrap.appendChild(row);
+  }
+  return wrap;
+}
+function renderCmsTree(){
+  const host = $("#cmsTree"); host.innerHTML='';
+  if(CMS.data && typeof CMS.data==='object'){
+    (Array.isArray(CMS.data)?CMS.data.map((_,i)=>i):Object.keys(CMS.data)).forEach(k => host.appendChild(cmsField(CMS.data,k)));
+  }
+  const raw = $("#cmsRaw"); if(raw) raw.value = JSON.stringify(CMS.data, null, 2);
+}
+function syncMode(){
+  const tree = cmsMode==='tree';
+  $("#cmsTree").style.display = tree?'':'none';
+  $("#cmsRaw").style.display  = tree?'none':'';
+  $("#modeTree").classList.toggle('on', tree);
+  $("#modeRaw").classList.toggle('on', !tree);
+  if(!tree) $("#cmsRaw").value = JSON.stringify(CMS.data, null, 2);
+}
+async function cmsSave(){
+  if(!CMS.file){ toast('load a file first'); return; }
+  let payload = CMS.data;
+  if(cmsMode==='raw'){
+    try{ payload = JSON.parse($("#cmsRaw").value); CMS.data = payload; }
+    catch(e){ toast('invalid JSON — '+e.message); return; }
+  }
+  $("#cmsSave").disabled = true;
+  try{
+    const r = await fetch('/api/cms-save?file='+encodeURIComponent(CMS.file),
+      {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    const j = await r.json().catch(()=>({ok:false}));
+    if(r.ok && j.ok){ toast('saved · backup made'); loadControl(); if(cmsMode==='tree') renderCmsTree(); }
+    else toast('save failed: '+(j.error||r.status));
+  }catch(e){ toast('save failed — server offline?'); }
+  $("#cmsSave").disabled = false;
+}
+
+// ── Quick edit · per node — the simple layer over the backbone CMS ──
+let QE_DATA=null, QE_FIN=null;
+const QE_NODES=[
+  {k:'white',nm:'White · career',c:'#cfe0ff'},{k:'finance',nm:'Finance · capital',c:'#5fe8c0'},
+  {k:'work',nm:'Work · delivery',c:'#ffb020'},{k:'research',nm:'Research',c:'#74c7ff'},
+  {k:'learning',nm:'Learning',c:'#c6ff2e'},{k:'blue',nm:'Blue · AI-artist',c:'#a78bfa'},
+  {k:'black',nm:'Black · exit',c:'#b39ddb'}];
+async function qeSave(file,obj,msg){try{const r=await fetch('/api/cms-save?file='+encodeURIComponent(file),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});const j=await r.json().catch(()=>({}));toast(r.ok&&j.ok!==false?(msg||'saved ✓'):'⚠ '+(j.error||'save failed'));}catch(e){toast('⚠ offline');}}
+async function qeLoad(){
+  try{QE_DATA=await (await fetch('/zola-data.json?'+Date.now())).json();}catch(e){QE_DATA={goals:{},nodes:{}};}
+  try{QE_FIN=await (await fetch('/zola-finance-assets.local.json?'+Date.now())).json();}catch(e){QE_FIN={assets:[]};}
+  qeRender();
+}
+function qeFin(){const a=(QE_FIN&&QE_FIN.assets)||[];let t=0;const rows=a.map((x,i)=>{t+=(+x.amount||0);return `<div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-top:1px solid #24262c"><div style="flex:1;min-width:0;font-size:12px">${esc(x.name)}<div style="color:var(--dim);font-size:10px">${esc(x.class||'')}</div></div><input value="${(+x.amount||0).toLocaleString('en-IN')}" onchange="qeAsset(${i},this.value)" style="width:120px;text-align:right;background:#0a0b0d;border:1px solid #24262c;border-radius:7px;color:#5fe8c0;font:13px ui-monospace,monospace;padding:6px 9px"></div>`;}).join('');return `<div style="margin-top:9px"><div style="color:var(--dim);font-size:10px;letter-spacing:.08em;text-transform:uppercase">assets · editable</div>${rows}<div style="display:flex;justify-content:space-between;margin-top:7px;padding-top:7px;border-top:1px solid #24262c"><span style="color:var(--dim);font-size:11px">${a.length} assets</span><b style="color:#d6f84a;font:600 15px ui-monospace,monospace">₹${Math.round(t).toLocaleString('en-IN')}</b></div></div>`;}
+function qeRender(){
+  const g=(QE_DATA&&QE_DATA.goals)||{};
+  $('#quickEdit').innerHTML=QE_NODES.map(n=>`<div class="panel" style="border-left:3px solid ${n.c}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="width:8px;height:8px;border-radius:50%;background:${n.c};box-shadow:0 0 8px ${n.c}"></span><b style="font-size:13px">${n.nm}</b></div>
+    <label style="color:var(--dim);font-size:10px;letter-spacing:.06em;text-transform:uppercase">goal</label>
+    <input value="${esc(g[n.k]||'')}" placeholder="set this node's goal…" onchange="qeGoal('${n.k}',this.value)" style="width:100%;margin-top:5px;background:#0a0b0d;border:1px solid #24262c;border-radius:8px;color:#e9edf2;font-size:13px;padding:8px 11px">
+    ${n.k==='finance'?qeFin():''}
+  </div>`).join('');
+}
+async function qeGoal(k,v){let d;try{d=await (await fetch('/zola-data.json?'+Date.now())).json();}catch(e){d=QE_DATA;}d.goals=d.goals||{};d.goals[k]=v;QE_DATA=d;await qeSave('zola-data.json',d,'goal saved ✓');}
+async function qeAsset(i,v){QE_FIN.assets[i].amount=parseInt(String(v).replace(/[^0-9]/g,''))||0;QE_FIN.updated=new Date().toISOString().slice(0,10);qeRender();await qeSave('zola-finance-assets.local.json',QE_FIN,'value saved ✓');}
+async function loadLoop(){
+  let d; try{ d = await (await fetch("/api/loop?"+Date.now())).json(); }catch(e){ $('#loopPanel').innerHTML='<div class="panel" style="color:var(--dim)">loop offline</div>'; return; }
+  const c=d.counts||{skills:0,proven:0,signals:0};
+  const chip=(t,col)=>`<span style="display:inline-block;background:#0a0b0d;border:1px solid #24262c;border-radius:20px;padding:3px 10px;margin:3px 4px 0 0;font-size:11px;color:${col||'#9aa4b2'}">${esc(t)}</span>`;
+  const proven=(d.proven||[]).map(s=>`<div style="padding:9px 0;border-top:1px solid #24262c">
+      <div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:13px;color:#d6f84a">${esc(s.name)}</b><span style="color:#5fe8c0;font:600 12px ui-monospace,monospace">${(s.confidence!=null?s.confidence:'')}</span></div>
+      <div style="color:var(--dim);font-size:11px;margin-top:2px">${esc(s.shape||'')} · ${esc(s.move||'')}</div>
+      ${s.playbook?('<ol style="margin:6px 0 0;padding-left:18px;color:#c7cdd6;font-size:11px">'+s.playbook.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>'):(s.needs_playbook?'<div style="color:#e0a34a;font-size:11px;margin-top:4px">⚠ proven — attach a playbook (steps + template)</div>':'')}
+    </div>`).join('') || '<div style="color:var(--dim);font-size:12px">no proven moves yet — capture outcomes via the relay or the job pipeline</div>';
+  $('#loopPanel').innerHTML=`
+    <div class="panel">
+      <div style="color:var(--dim);font-size:10px;letter-spacing:.08em;text-transform:uppercase">proven moves · top ${((d.proven||[]).length)}</div>
+      ${proven}
+      <div style="margin-top:8px;color:var(--dim);font-size:10px">${c.skills} skills · ${c.proven} proven · ${c.signals} signals</div>
+      <div style="margin-top:4px;color:var(--dim);font-size:10px">↻ loop refreshed: ${d.last_refresh?esc(d.last_refresh):'—'}${d.changed?' · <span style="color:#5fe8c0">changed: '+esc(JSON.stringify(d.changed))+'</span>':''}</div>
+    </div>
+    <div class="panel">
+      <div style="color:var(--dim);font-size:10px;letter-spacing:.08em;text-transform:uppercase">reinforce</div>
+      <div>${(d.reinforce||[]).map(t=>chip(t,'#5fe8c0')).join('')||'<span style="color:var(--dim);font-size:12px">—</span>'}</div>
+      <div style="color:var(--dim);font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-top:12px">avoid</div>
+      <div>${(d.avoid||[]).map(t=>chip(t,'#e0a34a')).join('')||'<span style="color:var(--dim);font-size:12px">—</span>'}</div>
+      ${(d.decaying||[]).length?('<div style="color:var(--dim);font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-top:12px">retired (decayed)</div><div>'+d.decaying.map(t=>chip(t,'#6b7280')).join('')+'</div>'):''}
+      ${(d.needs_playbook||[]).length?('<div style="color:#e0a34a;font-size:11px;margin-top:12px">✎ needs playbook: '+d.needs_playbook.map(esc).join(', ')+'</div>'):''}
+    </div>`;
+}
+function tick(){ $("#clock").textContent = new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}); }
+tick(); setInterval(tick,30000);
+loadControl(); loadDSL(); renderCmsChips(); qeLoad(); loadLoop();
+setInterval(loadControl, 20000); setInterval(loadLoop, 20000);
+</script>
+</body>
+</html>
